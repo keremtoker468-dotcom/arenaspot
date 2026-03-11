@@ -2,8 +2,9 @@
 
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/lib/types/database";
-import type { AppRole } from "@/app/page";
+import type { AppRole } from "@/lib/types/app";
 import FollowButton from "@/components/FollowButton";
+import { MapPin, Users, MessageSquare } from "lucide-react";
 
 interface AthleteCardProps {
   athlete: Profile;
@@ -73,8 +74,9 @@ export default function AthleteCard({
           </span>
         )}
         {athlete.city && (
-          <span className="inline-block rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
-            📍 {athlete.city}
+          <span className="inline-flex items-center gap-1 rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
+            <MapPin size={10} />
+            {athlete.city}
           </span>
         )}
       </div>
@@ -116,18 +118,20 @@ export default function AthleteCard({
 
       {/* Footer */}
       <div className="flex items-center justify-between border-t border-border pt-[10px]">
-        <span className="font-body text-[12px] text-faint">
-          👥 {athlete.followers_count.toLocaleString()}
+        <span className="inline-flex items-center gap-1 font-body text-[12px] text-faint">
+          <Users size={12} />
+          {athlete.followers_count.toLocaleString()}
         </span>
         {(role === "athlete" || role === "coach") && (
           <button
-            className="rounded-[6px] bg-foreground px-3 py-[5px] font-heading text-[11px] font-extrabold text-white transition-colors hover:bg-[#333]"
+            className="inline-flex items-center gap-[5px] rounded-[6px] bg-foreground px-3 py-[5px] font-heading text-[11px] font-extrabold text-white transition-colors hover:bg-[#333]"
             onClick={(e) => {
               e.stopPropagation();
               onMessage();
             }}
           >
-            💬 {role === "coach" ? "İletişim" : "Mesaj At"}
+            <MessageSquare size={11} />
+            {role === "coach" ? "Iletisim" : "Mesaj At"}
           </button>
         )}
       </div>

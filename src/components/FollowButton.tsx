@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { Check, Plus } from "lucide-react";
 
 export default function FollowButton({ athleteId }: { athleteId: string }) {
   const [isFollowing, setIsFollowing] = useState(false);
@@ -61,13 +62,22 @@ export default function FollowButton({ athleteId }: { athleteId: string }) {
     <button
       onClick={handleFollow}
       disabled={loading}
-      className={`whitespace-nowrap rounded-[6px] border-[1.5px] border-accent px-[14px] py-[5px] font-heading text-[12px] font-bold tracking-[0.5px] transition-all ${
+      className={`inline-flex items-center gap-[4px] whitespace-nowrap rounded-[6px] border-[1.5px] border-accent px-[14px] py-[5px] font-heading text-[12px] font-bold tracking-[0.5px] transition-all ${
         isFollowing
           ? "bg-accent text-white"
           : "bg-transparent text-accent hover:bg-accent hover:text-white"
       } disabled:opacity-50`}
     >
-      {isFollowing ? "✓" : "+ Takip"}
+      {isFollowing ? (
+        <>
+          <Check size={12} />
+        </>
+      ) : (
+        <>
+          <Plus size={12} />
+          Takip
+        </>
+      )}
     </button>
   );
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Conversation, Profile, Message } from "@/lib/types/database";
+import { Swords, Briefcase, MessageCircle, Inbox, Send } from "lucide-react";
 
 type ConversationWithProfile = Conversation & {
   otherUser: Profile;
@@ -22,6 +23,7 @@ export default function MessagesClient({
   );
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [showList, setShowList] = useState(true);
   const bodyRef = useRef<HTMLDivElement>(null);
   const supabase = createClient();
 
@@ -94,29 +96,46 @@ export default function MessagesClient({
     return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
   };
 
+  const getTypeIcon = (type: string) => {
+    if (type === "job_offer") return <Briefcase size={12} className="text-muted" />;
+    if (type === "sparring") return <Swords size={12} className="text-muted" />;
+    return <MessageCircle size={12} className="text-muted" />;
+  };
+
+  const getTypeLabel = (type: string) => {
+    if (type === "job_offer") return "Is birligi";
+    if (type === "sparring") return "Sparring";
+    return "Mesaj";
+  };
+
   if (conversations.length === 0) {
     return (
       <div className="rounded-[12px] border border-border bg-white p-16 text-center">
-        <div className="mb-3 text-4xl">💬</div>
-        <p className="text-lg font-bold">Henüz mesajın yok</p>
+        <div className="mb-3 flex justify-center text-muted">
+          <Inbox size={36} />
+        </div>
+        <p className="text-lg font-bold">Henuz mesajin yok</p>
         <p className="mt-1 font-body text-sm text-muted">
-          Sporcuları keşfet ve ilk mesajını gönder!
+          Sporculari kesfet ve ilk mesajini gonder!
         </p>
       </div>
     );
   }
 
   return (
-    <div className="grid h-[600px] grid-cols-[300px_1fr] overflow-hidden rounded-[12px] border border-border bg-white">
+    <div className="grid h-[600px] grid-cols-1 overflow-hidden rounded-[12px] border border-border bg-white md:grid-cols-[300px_1fr]">
       {/* Conversation list */}
-      <div className="overflow-y-auto border-r border-border">
+      <div className={`overflow-y-auto border-r border-border ${!showList && activeConvo ? "hidden md:block" : ""}`}>
         {conversations.map((c) => (
           <div
             key={c.id}
             className={`flex cursor-pointer items-center gap-3 border-b border-border p-4 transition-colors hover:bg-surface ${
               activeConvo?.id === c.id ? "bg-accent-light" : ""
             }`}
-            onClick={() => setActiveConvo(c)}
+            onClick={() => {
+              setActiveConvo(c);
+              setShowList(false);
+            }}
           >
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[9px] border-[1.5px] border-accent-border bg-accent-light text-[13px] font-black text-accent">
               {getInitials(c.otherUser.full_name)}
@@ -125,12 +144,9 @@ export default function MessagesClient({
               <div className="truncate text-sm font-bold">
                 {c.otherUser.full_name}
               </div>
-              <div className="font-body text-[12px] text-faint">
-                {c.type === "job_offer"
-                  ? "💼 İş birliği"
-                  : c.type === "sparring"
-                    ? "🥊 Sparring"
-                    : "💬 Mesaj"}
+              <div className="flex items-center gap-1 font-body text-[12px] text-faint">
+                {getTypeIcon(c.type)}
+                {getTypeLabel(c.type)}
               </div>
             </div>
           </div>
@@ -139,9 +155,17 @@ export default function MessagesClient({
 
       {/* Chat area */}
       {activeConvo ? (
-        <div className="flex flex-col">
+        <div className={`flex flex-col ${showList ? "hidden md:flex" : ""}`}>
           {/* Chat header */}
           <div className="flex items-center gap-3 border-b border-border p-4">
+            <button
+              onClick={() => setShowList(true)}
+              className="text-muted md:hidden"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
             <div className="flex h-9 w-9 items-center justify-center rounded-[8px] border-[1.5px] border-accent-border bg-accent-light text-[12px] font-black text-accent">
               {getInitials(activeConvo.otherUser.full_name)}
             </div>
@@ -194,18 +218,16 @@ export default function MessagesClient({
             />
             <button
               onClick={sendMsg}
-              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[7px] bg-accent text-white"
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[7px] bg-accent text-white transition-colors hover:bg-accent-dark"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
-                <path d="M1 1l12 6-12 6V8.5l8-1.5-8-1.5V1z" />
-              </svg>
+              <Send size={14} />
             </button>
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-center">
+        <div className="hidden items-center justify-center md:flex">
           <p className="font-body text-sm text-faint">
-            Bir konuşma seç
+            Bir konusma sec
           </p>
         </div>
       )}
