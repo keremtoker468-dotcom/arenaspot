@@ -3,11 +3,31 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --red: #e63946;
+  --rl: #fff0f1;
+  --rb: #ffd0d3;
+  --border: #eaeaea;
+  --muted: #888;
+  --faint: #bbb;
+  --surface: #f7f7f7;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: #0a0a0a;
+  background: #ffffff;
+  font-family: "Barlow Condensed", sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--red);
+  border-radius: 2px;
 }

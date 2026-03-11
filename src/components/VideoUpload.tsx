@@ -29,14 +29,14 @@ export default function VideoUpload() {
 
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error ?? "Upload failed");
+        throw new Error(data.error ?? "Yükleme başarısız");
       }
 
       setTitle("");
       setFile(null);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(err instanceof Error ? err.message : "Yükleme başarısız");
     } finally {
       setUploading(false);
     }
@@ -45,36 +45,36 @@ export default function VideoUpload() {
   return (
     <form
       onSubmit={handleUpload}
-      className="mt-4 rounded-xl border border-dashed border-gray-200 p-4"
+      className="mt-4 rounded-[12px] border border-dashed border-border p-4"
     >
       <div className="space-y-3">
         <input
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Video title"
+          placeholder="Video başlığı"
           required
-          className="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
+          className="w-full rounded-[8px] border border-border px-3 py-2 font-body text-sm outline-none focus:border-accent"
         />
         <input
           type="file"
           accept="video/*"
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           required
-          className="block w-full text-sm text-gray-500 file:mr-3 file:rounded-lg file:border-0 file:bg-accent file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-white hover:file:bg-accent-dark"
+          className="block w-full font-body text-sm text-muted file:mr-3 file:rounded-[8px] file:border-0 file:bg-accent file:px-3 file:py-[6px] file:text-sm file:font-semibold file:text-white hover:file:bg-accent-dark"
         />
       </div>
 
       {error && (
-        <p className="mt-2 text-sm text-red-600">{error}</p>
+        <p className="mt-2 font-body text-sm text-accent">{error}</p>
       )}
 
       <button
         type="submit"
         disabled={uploading || !file || !title}
-        className="mt-3 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-dark disabled:opacity-50"
+        className="mt-3 rounded-[8px] bg-accent px-4 py-2 font-heading text-sm font-bold text-white transition-colors hover:bg-accent-dark disabled:opacity-50"
       >
-        {uploading ? "Uploading..." : "Upload Video"}
+        {uploading ? "Yükleniyor..." : "Video Yükle"}
       </button>
     </form>
   );

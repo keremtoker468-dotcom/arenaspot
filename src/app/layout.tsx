@@ -1,23 +1,10 @@
 import type { Metadata } from "next";
-import { Inter, Barlow_Condensed } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-const barlowCondensed = Barlow_Condensed({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-barlow-condensed",
-});
 
 export const metadata: Metadata = {
-  title: "Arenaspot — Discover MMA Athletes",
+  title: "Arenaspot — Dövüş Sporları Platformu",
   description:
-    "The premier platform for MMA fighters to showcase their skills and get discovered by scouts, coaches, and fans.",
+    "Sporcu keşfet, salonunu tanıt ya da favori dövüşçülerini takip et.",
 };
 
 export default function RootLayout({
@@ -26,12 +13,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${inter.variable} ${barlowCondensed.variable} font-sans antialiased`}
-      >
-        <Navbar />
-        <main>{children}</main>
+    <html lang="tr">
+      <head>
+        <link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+        />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,600;0,700;0,800;0,900;1,700;1,900&family=Barlow:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="antialiased">
+        {children}
       </body>
     </html>
   );
