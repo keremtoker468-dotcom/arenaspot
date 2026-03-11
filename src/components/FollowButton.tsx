@@ -10,6 +10,7 @@ export default function FollowButton({ athleteId }: { athleteId: string }) {
 
   useEffect(() => {
     checkFollowStatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [athleteId]);
 
   const checkFollowStatus = async () => {
@@ -28,14 +29,12 @@ export default function FollowButton({ athleteId }: { athleteId: string }) {
     setIsFollowing(!!data);
   };
 
-  const handleFollow = async () => {
+  const handleFollow = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) {
-      window.location.href = "/auth";
-      return;
-    }
+    if (!user) return;
 
     setLoading(true);
     try {
@@ -62,13 +61,13 @@ export default function FollowButton({ athleteId }: { athleteId: string }) {
     <button
       onClick={handleFollow}
       disabled={loading}
-      className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+      className={`whitespace-nowrap rounded-[6px] border-[1.5px] border-accent px-[14px] py-[5px] font-heading text-[12px] font-bold tracking-[0.5px] transition-all ${
         isFollowing
-          ? "border border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-          : "bg-accent text-white hover:bg-accent-dark"
+          ? "bg-accent text-white"
+          : "bg-transparent text-accent hover:bg-accent hover:text-white"
       } disabled:opacity-50`}
     >
-      {isFollowing ? "Following" : "Follow"}
+      {isFollowing ? "✓" : "+ Takip"}
     </button>
   );
 }

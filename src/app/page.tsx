@@ -1,70 +1,180 @@
-import { createClient } from "@/lib/supabase/server";
-import AthleteCard from "@/components/AthleteCard";
-import DiscoveryFilters from "@/components/DiscoveryFilters";
+"use client";
 
-export const dynamic = "force-dynamic";
-import type { Profile } from "@/lib/types/database";
+import { useState, useEffect } from "react";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
+import type { Profile, UserRole } from "@/lib/types/database";
+import Navbar from "@/components/Navbar";
+import LandingHero from "@/components/LandingHero";
+import CoachTypeSelect from "@/components/CoachTypeSelect";
+import DiscoverPage from "@/components/DiscoverPage";
+import AthleteProfile from "@/components/AthleteProfile";
+import AuthModal from "@/components/AuthModal";
+import ChatPanel from "@/components/ChatPanel";
 
-export default async function DiscoveryPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ weight_class?: string; fight_style?: string; q?: string }>;
-}) {
-  const params = await searchParams;
-  const supabase = await createClient();
+export type AppRole = "athlete" | "fan" | "coach";
+export type CoachType = "gym" | "pt";
+export type PageState = "landing" | "coachtype" | "discover" | "profile";
 
-  let query = supabase
-    .from("profiles")
-    .select("*")
-    .order("followers_count", { ascending: false });
+export default function App() {
+  const [page, setPage] = useState<PageState>("landing");
+  const [role, setRole] = useState<AppRole | null>(null);
+  const [coachType, setCoachType] = useState<CoachType | null>(null);
+  const [selectedAthlete, setSelectedAthlete] = useState<Profile | null>(null);
+  const [authModal, setAuthModal] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [activeChat, setActiveChat] = useState<{
+    id: string;
+    name: string;
+    avatar: string;
+    type: "fighter" | "pt";
+    style?: string;
+    city?: string;
+  } | null>(null);
 
-  if (params.weight_class) {
-    query = query.eq("weight_class", params.weight_class);
-  }
-  if (params.fight_style) {
-    query = query.eq("fight_style", params.fight_style);
-  }
-  if (params.q) {
-    query = query.or(
-      `full_name.ilike.%${params.q}%,username.ilike.%${params.q}%`
-    );
-  }
+  const supabase = createClient();
 
-  const { data } = await query;
-  const athletes = (data ?? []) as Profile[];
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      if (user) loadProfile(user.id);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const u = session?.user ?? null;
+      setUser(u);
+      if (u) loadProfile(u.id);
+    });
+
+    return () => subscription.unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadProfile = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", userId)
+      .single();
+    if (data) {
+      const profileData = data as Profile;
+      setProfile(profileData);
+      const r = profileData.role as UserRole;
+      if (r === "athlete") {
+        setRole("athlete");
+      } else if (r === "fan") {
+        setRole("fan");
+      } else if (r === "gym" || r === "pt") {
+        setRole("coach");
+        setCoachType(r);
+      }
+      if (page === "landing") setPage("discover");
+    }
+  };
+
+  const goTo = (r: AppRole) => {
+    setRole(r);
+    setPage("discover");
+    setSelectedAthlete(null);
+  };
+
+  const goHome = () => {
+    setPage("landing");
+    setRole(null);
+    setSelectedAthlete(null);
+    setActiveChat(null);
+    setCoachType(null);
+  };
+
+  const handleAuthComplete = (
+    authRole: AppRole,
+    authCoachType: CoachType | null
+  ) => {
+    setAuthModal(false);
+    setRole(authRole);
+    if (authRole === "coach" && authCoachType) setCoachType(authCoachType);
+    setPage("discover");
+    setSelectedAthlete(null);
+  };
+
+  const openProfile = (athlete: Profile) => {
+    setSelectedAthlete(athlete);
+    setPage("profile");
+  };
+
+  const backToDiscover = () => {
+    setSelectedAthlete(null);
+    setPage("discover");
+  };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Hero */}
-      <div className="mb-10 text-center">
-        <h1 className="font-heading text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-          DISCOVER MMA ATHLETES
-        </h1>
-        <p className="mt-3 text-lg text-gray-600">
-          Find rising fighters, watch highlights, and follow their journey to
-          the top.
-        </p>
-      </div>
+    <div className="min-h-screen bg-white text-foreground">
+      <Navbar
+        role={role}
+        coachType={coachType}
+        page={page}
+        onGoHome={goHome}
+        onOpenAuth={() => setAuthModal(true)}
+        user={user}
+      />
 
-      {/* Filters */}
-      <DiscoveryFilters />
+      {page === "landing" && (
+        <LandingHero
+          onSelectRole={goTo}
+          onSelectCoach={() => {
+            setRole("coach");
+            setPage("coachtype");
+          }}
+          onOpenAuth={() => setAuthModal(true)}
+        />
+      )}
 
-      {/* Athletes Grid */}
-      {athletes.length > 0 ? (
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {athletes.map((athlete) => (
-            <AthleteCard key={athlete.id} athlete={athlete} />
-          ))}
-        </div>
-      ) : (
-        <div className="mt-16 text-center">
-          <p className="font-heading text-xl font-semibold text-gray-400">
-            No athletes found
-          </p>
-          <p className="mt-2 text-sm text-gray-400">
-            Try adjusting your filters or check back later.
-          </p>
-        </div>
+      {page === "coachtype" && (
+        <CoachTypeSelect
+          onSelect={(type) => {
+            setCoachType(type);
+            setPage("discover");
+          }}
+        />
+      )}
+
+      {page === "discover" && !selectedAthlete && (
+        <DiscoverPage
+          role={role}
+          coachType={coachType}
+          onSelectAthlete={openProfile}
+          onOpenChat={setActiveChat}
+          user={user}
+        />
+      )}
+
+      {page === "profile" && selectedAthlete && (
+        <AthleteProfile
+          athlete={selectedAthlete}
+          role={role}
+          onBack={backToDiscover}
+          onOpenChat={setActiveChat}
+          user={user}
+        />
+      )}
+
+      {activeChat && (
+        <ChatPanel
+          chat={activeChat}
+          onClose={() => setActiveChat(null)}
+          user={user}
+        />
+      )}
+
+      {authModal && (
+        <AuthModal
+          onClose={() => setAuthModal(false)}
+          onComplete={handleAuthComplete}
+        />
       )}
     </div>
   );

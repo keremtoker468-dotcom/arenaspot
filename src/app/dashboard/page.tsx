@@ -36,51 +36,64 @@ export default async function DashboardPage() {
 
   const videos = (videosData ?? []) as Video[];
 
+  const isAthlete = profile.role === "athlete";
+  const roleLabel =
+    profile.role === "athlete"
+      ? "Sporcu"
+      : profile.role === "fan"
+        ? "Fan"
+        : profile.role === "gym"
+          ? "Salon Sahibi"
+          : "Personal Trainer";
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="font-heading text-3xl font-bold tracking-tight text-gray-900">
-        YOUR PROFILE
-      </h1>
-      <p className="mt-1 text-sm text-gray-600">
-        Manage your fighter profile and highlight videos.
+    <div className="mx-auto max-w-3xl px-10 py-8">
+      <div className="mb-1 flex items-center gap-3">
+        <h1 className="text-[32px] font-black tracking-[-0.5px]">
+          PROFİLİN
+        </h1>
+        <span className="rounded-[20px] border border-accent-border bg-accent-light px-3 py-[3px] text-[11px] font-bold tracking-[1px] text-accent">
+          {roleLabel}
+        </span>
+      </div>
+      <p className="font-body text-sm text-muted">
+        Profilini düzenle ve bilgilerini güncelle.
       </p>
 
-      {/* Profile Form */}
       <div className="mt-8">
         <DashboardForm profile={profile} />
       </div>
 
-      {/* Video Management */}
-      <div className="mt-10">
-        <h2 className="font-heading text-xl font-bold text-gray-900">
-          HIGHLIGHT VIDEOS
-        </h2>
-        <VideoUpload />
+      {isAthlete && (
+        <div className="mt-10">
+          <h2 className="text-xl font-black">HIGHLIGHT VİDEOLARI</h2>
+          <VideoUpload />
 
-        {videos.length > 0 && (
-          <div className="mt-4 space-y-3">
-            {videos.map((video) => (
-              <div
-                key={video.id}
-                className="flex items-center justify-between rounded-lg border border-gray-100 p-4"
-              >
-                <div>
-                  <p className="font-medium text-gray-900">{video.title}</p>
-                  {video.duration && (
-                    <p className="text-xs text-gray-500">
-                      {Math.floor(video.duration / 60)}:
-                      {String(video.duration % 60).padStart(2, "0")}
-                    </p>
-                  )}
+          {videos.length > 0 && (
+            <div className="mt-4 space-y-3">
+              {videos.map((video) => (
+                <div
+                  key={video.id}
+                  className="flex items-center justify-between rounded-[10px] border border-border p-4"
+                >
+                  <div>
+                    <p className="font-semibold">{video.title}</p>
+                    {video.duration && (
+                      <p className="font-body text-xs text-faint">
+                        {Math.floor(video.duration / 60)}:
+                        {String(video.duration % 60).padStart(2, "0")}
+                      </p>
+                    )}
+                  </div>
+                  <span className="font-body text-xs text-faint">
+                    {new Date(video.created_at).toLocaleDateString("tr-TR")}
+                  </span>
                 </div>
-                <span className="text-xs text-gray-400">
-                  {new Date(video.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

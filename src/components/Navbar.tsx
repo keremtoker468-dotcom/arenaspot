@@ -1,104 +1,90 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import type { AppRole, CoachType, PageState } from "@/app/page";
 
-export default function Navbar() {
-  const pathname = usePathname();
-  const [user, setUser] = useState<User | null>(null);
-  const supabase = createClient();
+interface NavbarProps {
+  role: AppRole | null;
+  coachType: CoachType | null;
+  page: PageState;
+  onGoHome: () => void;
+  onOpenAuth: () => void;
+  user: User | null;
+}
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-    });
+export default function Navbar({
+  role,
+  coachType,
+  page,
+  onGoHome,
+  onOpenAuth,
+}: NavbarProps) {
+  const roleLabel =
+    role === "athlete"
+      ? "Sporcu"
+      : role === "fan"
+        ? "Fan"
+        : coachType === "gym"
+          ? "Salon"
+          : coachType === "pt"
+            ? "PT"
+            : null;
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    window.location.href = "/";
-  };
+  const roleIcon =
+    role === "athlete"
+      ? "🥊"
+      : role === "fan"
+        ? "👁"
+        : coachType === "gym"
+          ? "🏢"
+          : coachType === "pt"
+            ? "👤"
+            : null;
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-gray-100 bg-white/95 backdrop-blur-sm">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent">
-            <span className="text-sm font-bold text-white">A</span>
+    <nav className="sticky top-0 z-[100] border-b border-border bg-white">
+      <div className="mx-auto flex h-[60px] max-w-[1200px] items-center justify-between px-10">
+        <div
+          className="flex cursor-pointer items-center gap-[9px]"
+          onClick={onGoHome}
+        >
+          <div className="flex h-8 w-8 items-center justify-center rounded-[7px] bg-accent text-[17px] font-black text-white">
+            A
           </div>
-          <span className="font-heading text-xl font-bold tracking-tight text-gray-900">
-            ARENASPOT
+          <span className="text-[21px] font-black uppercase tracking-[1.5px]">
+            Arena<span className="text-accent">spot</span>
           </span>
-        </Link>
+        </div>
 
-        <div className="hidden items-center gap-6 sm:flex">
-          <Link
-            href="/"
-            className={`text-sm font-medium transition-colors ${
-              pathname === "/"
-                ? "text-accent"
-                : "text-gray-600 hover:text-gray-900"
-            }`}
-          >
-            Discover
-          </Link>
-          {user ? (
-            <>
-              <Link
-                href="/dashboard"
-                className={`text-sm font-medium transition-colors ${
-                  pathname === "/dashboard"
-                    ? "text-accent"
-                    : "text-gray-600 hover:text-gray-900"
-                }`}
-              >
-                Dashboard
-              </Link>
-              <button
-                onClick={handleSignOut}
-                className="text-sm font-medium text-gray-600 transition-colors hover:text-gray-900"
-              >
-                Sign Out
-              </button>
-            </>
-          ) : (
-            <Link
-              href="/auth"
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-dark"
+        <div className="flex items-center gap-2">
+          {page !== "landing" && (
+            <button
+              onClick={onGoHome}
+              className="rounded-[7px] border border-border bg-transparent px-[15px] py-[7px] font-heading text-[13px] font-bold text-muted transition-all hover:border-[#ccc] hover:text-foreground"
             >
-              Sign In
-            </Link>
+              ← Ana Sayfa
+            </button>
+          )}
+          {role && roleLabel && (
+            <span className="rounded-[20px] border border-accent-border bg-accent-light px-3 py-[5px] text-[12px] font-bold tracking-[1px] text-accent">
+              {roleIcon} {roleLabel}
+            </span>
           )}
         </div>
 
-        {/* Mobile menu button */}
-        <div className="sm:hidden">
-          {user ? (
-            <Link
-              href="/dashboard"
-              className="rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-white"
-            >
-              Dashboard
-            </Link>
-          ) : (
-            <Link
-              href="/auth"
-              className="rounded-lg bg-accent px-3 py-1.5 text-sm font-semibold text-white"
-            >
-              Sign In
-            </Link>
-          )}
+        <div className="flex gap-2">
+          <button
+            onClick={onOpenAuth}
+            className="rounded-[7px] border border-border bg-transparent px-[15px] py-[7px] font-heading text-[13px] font-bold text-muted transition-all hover:border-[#ccc] hover:text-foreground"
+          >
+            Giriş Yap
+          </button>
+          <button
+            onClick={onOpenAuth}
+            className="rounded-[7px] border border-accent bg-accent px-[15px] py-[7px] font-heading text-[13px] font-bold text-white transition-all hover:bg-accent-dark"
+          >
+            Kayıt Ol
+          </button>
         </div>
       </div>
     </nav>

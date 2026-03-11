@@ -9,14 +9,34 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        accent: "#e63946",
-        "accent-dark": "#c62d3a",
+        background: "#ffffff",
+        foreground: "#0a0a0a",
+        accent: {
+          DEFAULT: "#e63946",
+          dark: "#c1121f",
+          light: "#fff0f1",
+          border: "#ffd0d3",
+        },
+        border: "#eaeaea",
+        muted: "#888888",
+        faint: "#bbbbbb",
+        surface: "#f7f7f7",
       },
       fontFamily: {
-        heading: ["var(--font-barlow-condensed)", "sans-serif"],
-        sans: ["var(--font-inter)", "sans-serif"],
+        heading: ['"Barlow Condensed"', "sans-serif"],
+        body: ['"Barlow"', "sans-serif"],
+      },
+      keyframes: {
+        fadeUp: {
+          from: { opacity: "0", transform: "translateY(14px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+      },
+      animation: {
+        "fade-up": "fadeUp 0.35s ease forwards",
+        "fade-up-1": "fadeUp 0.35s ease 0.05s forwards",
+        "fade-up-2": "fadeUp 0.35s ease 0.1s forwards",
+        "fade-up-3": "fadeUp 0.35s ease 0.15s forwards",
       },
     },
   },

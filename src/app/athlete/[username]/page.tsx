@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import FollowButton from "@/components/FollowButton";
+import type { Profile, Video } from "@/lib/types/database";
 
 export const dynamic = "force-dynamic";
-import type { Profile, Video } from "@/lib/types/database";
 
 export async function generateMetadata({
   params,
@@ -19,11 +19,11 @@ export async function generateMetadata({
     .single();
 
   const profile = data as { full_name: string; bio: string | null } | null;
-  if (!profile) return { title: "Athlete Not Found" };
+  if (!profile) return { title: "Sporcu Bulunamadı" };
 
   return {
     title: `${profile.full_name} — Arenaspot`,
-    description: profile.bio ?? `Check out ${profile.full_name} on Arenaspot`,
+    description: profile.bio ?? `${profile.full_name} Arenaspot profilini keşfet`,
   };
 }
 
@@ -51,126 +51,158 @@ export default async function AthletePage({
     .order("created_at", { ascending: false });
 
   const videos = (videosData ?? []) as Video[];
-  const record = `${profile.record_w}W - ${profile.record_l}L - ${profile.record_d}D`;
+
+  const getInitials = (name: string) => {
+    const parts = name.split(" ");
+    return parts.length > 1
+      ? `${parts[0][0]}${parts[parts.length - 1][0]}`
+      : name.substring(0, 2);
+  };
+
+  const info = [
+    ["Stil", profile.fight_style],
+    ["Kilo", profile.weight_class],
+    ["Yaş", profile.age ? `${profile.age}` : null],
+    ["Şehir", profile.city],
+    ["Gym", profile.gym_name],
+    ["Takipçi", profile.followers_count.toLocaleString()],
+  ].filter(([, v]) => v);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Profile Header */}
-      <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-        <div className="h-32 bg-gradient-to-r from-accent to-red-400" />
-        <div className="relative px-6 pb-6">
-          <div className="-mt-12 flex items-end gap-4">
-            <div className="h-24 w-24 overflow-hidden rounded-xl border-4 border-white bg-gray-200 shadow-sm">
-              {profile.avatar_url ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.full_name}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center">
-                  <span className="font-heading text-3xl font-bold text-gray-400">
-                    {profile.full_name.charAt(0)}
-                  </span>
-                </div>
-              )}
+    <div className="mx-auto max-w-[1200px] px-10 py-6 font-heading">
+      <Link
+        href="/"
+        className="mb-5 inline-flex items-center gap-[5px] text-[13px] font-bold text-muted transition-colors hover:text-foreground"
+      >
+        ← Ana Sayfa
+      </Link>
+
+      <div className="grid grid-cols-[280px_1fr_220px] gap-5">
+        {/* Left Column */}
+        <div className="flex flex-col gap-[14px]">
+          <div className="relative overflow-hidden rounded-[12px] border border-border bg-white p-[22px]">
+            <div className="absolute left-0 right-0 top-0 h-1 bg-accent" />
+            <div className="mx-auto mb-[14px] flex h-[72px] w-[72px] items-center justify-center rounded-[14px] border-2 border-accent-border bg-accent-light text-[26px] font-black text-accent">
+              {getInitials(profile.full_name)}
             </div>
-            <div className="mb-1 flex-1">
-              <div className="flex items-center gap-2">
-                <h1 className="font-heading text-2xl font-bold text-gray-900">
+            <div className="mb-[14px] text-center">
+              <div className="mb-[3px] flex items-center justify-center gap-[7px]">
+                <span className="text-[20px] font-black">
                   {profile.full_name}
-                </h1>
+                </span>
                 {profile.is_verified && (
-                  <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-white">
-                    Verified
+                  <span className="rounded-[4px] bg-accent px-[6px] py-[2px] text-[9px] font-extrabold tracking-[1px] text-white">
+                    PRO
                   </span>
                 )}
               </div>
-              <p className="text-sm text-gray-500">@{profile.username}</p>
-            </div>
-            <FollowButton athleteId={profile.id} />
-          </div>
-
-          {/* Stats */}
-          <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <div className="rounded-lg bg-gray-50 p-3 text-center">
-              <p className="font-heading text-xl font-bold text-gray-900">
-                {record}
-              </p>
-              <p className="text-xs text-gray-500">Record</p>
-            </div>
-            <div className="rounded-lg bg-gray-50 p-3 text-center">
-              <p className="font-heading text-xl font-bold text-gray-900">
-                {profile.weight_class ?? "—"}
-              </p>
-              <p className="text-xs text-gray-500">Weight Class</p>
-            </div>
-            <div className="rounded-lg bg-gray-50 p-3 text-center">
-              <p className="font-heading text-xl font-bold text-gray-900">
-                {profile.fight_style ?? "—"}
-              </p>
-              <p className="text-xs text-gray-500">Style</p>
-            </div>
-            <div className="rounded-lg bg-gray-50 p-3 text-center">
-              <p className="font-heading text-xl font-bold text-gray-900">
-                {profile.followers_count}
-              </p>
-              <p className="text-xs text-gray-500">Followers</p>
+              <div className="font-body text-[13px] text-faint">
+                @{profile.username}
+              </div>
             </div>
           </div>
 
-          {/* Bio & Details */}
-          {profile.bio && (
-            <p className="mt-4 text-sm leading-relaxed text-gray-700">
-              {profile.bio}
-            </p>
-          )}
-          <div className="mt-3 flex gap-4 text-sm text-gray-500">
-            {profile.city && <span>{profile.city}</span>}
-            {profile.age && <span>{profile.age} years old</span>}
-          </div>
-        </div>
-      </div>
-
-      {/* Videos */}
-      <div className="mt-8">
-        <h2 className="font-heading text-xl font-bold text-gray-900">
-          HIGHLIGHT VIDEOS
-        </h2>
-        {videos.length > 0 ? (
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {videos.map((video) => (
+          <div className="rounded-[12px] border border-border bg-white p-[22px]">
+            <div className="mb-[14px] text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
+              Bilgiler
+            </div>
+            {info.map(([k, v]) => (
               <div
-                key={video.id}
-                className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm"
+                key={k}
+                className="flex justify-between border-b border-border py-[9px]"
               >
-                <div className="aspect-video bg-gray-900">
-                  <iframe
-                    src={`https://customer-${process.env.NEXT_PUBLIC_CLOUDFLARE_CUSTOMER_CODE}.cloudflarestream.com/${video.cloudflare_video_id}/iframe`}
-                    className="h-full w-full"
-                    allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
-                </div>
-                <div className="p-3">
-                  <h3 className="font-heading font-semibold text-gray-900">
-                    {video.title}
-                  </h3>
-                  {video.duration && (
-                    <p className="text-xs text-gray-500">
-                      {Math.floor(video.duration / 60)}:
-                      {String(video.duration % 60).padStart(2, "0")}
-                    </p>
-                  )}
-                </div>
+                <span className="font-body text-[13px] text-muted">{k}</span>
+                <span className="text-[13px] font-bold">{v}</span>
               </div>
             ))}
+            {profile.bio && (
+              <p className="mt-[14px] font-body text-[13px] leading-[1.6] text-muted">
+                {profile.bio}
+              </p>
+            )}
           </div>
-        ) : (
-          <p className="mt-4 text-sm text-gray-400">
-            No videos uploaded yet.
-          </p>
-        )}
+        </div>
+
+        {/* Center Column */}
+        <div className="flex flex-col gap-4">
+          <div className="rounded-[12px] border border-border bg-white p-[22px]">
+            <div className="mb-[14px] text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
+              Dövüş Rekoru
+            </div>
+            <div className="flex gap-3">
+              <div className="flex-1 rounded-[10px] border border-[#bbf7d0] bg-[#f0fdf4] p-[22px_12px] text-center">
+                <div className="text-[52px] font-black leading-none text-[#16a34a]">
+                  {profile.record_w}
+                </div>
+                <div className="mt-[5px] text-[12px] font-bold tracking-[2px] text-[#16a34a]">
+                  WINS
+                </div>
+              </div>
+              <div className="flex-1 rounded-[10px] border border-accent-border bg-accent-light p-[22px_12px] text-center">
+                <div className="text-[52px] font-black leading-none text-accent">
+                  {profile.record_l}
+                </div>
+                <div className="mt-[5px] text-[12px] font-bold tracking-[2px] text-accent">
+                  LOSSES
+                </div>
+              </div>
+              <div className="flex-1 rounded-[10px] border border-border bg-surface p-[22px_12px] text-center">
+                <div className="text-[52px] font-black leading-none text-faint">
+                  {profile.record_d}
+                </div>
+                <div className="mt-[5px] text-[12px] font-bold tracking-[2px] text-faint">
+                  DRAWS
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[12px] border border-border bg-white p-[22px]">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
+                Highlightlar
+              </div>
+              <span className="font-body text-[12px] text-faint">
+                {videos.length} video
+              </span>
+            </div>
+            {videos.length > 0 ? (
+              <div className="grid grid-cols-2 gap-[10px]">
+                {videos.map((video) => (
+                  <div
+                    key={video.id}
+                    className="relative flex aspect-video items-center justify-center overflow-hidden rounded-[9px] border border-border bg-surface"
+                  >
+                    {video.cloudflare_video_id && (
+                      <iframe
+                        src={`https://customer-${process.env.NEXT_PUBLIC_CLOUDFLARE_CUSTOMER_CODE}.cloudflarestream.com/${video.cloudflare_video_id}/iframe`}
+                        className="h-full w-full"
+                        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-8 text-center font-body text-sm text-faint">
+                Henüz video yüklenmemiş
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column */}
+        <div className="flex flex-col gap-[14px]">
+          <div className="rounded-[12px] border border-border bg-white p-[22px]">
+            <div className="mb-[14px] text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
+              Profil Linki
+            </div>
+            <div className="mb-[10px] break-all rounded-[7px] border border-border bg-surface p-[9px_12px] font-body text-[12px] text-muted">
+              arenaspot.com/{profile.username}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
