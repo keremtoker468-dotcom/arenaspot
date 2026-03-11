@@ -8,24 +8,25 @@ import type { Profile } from "@/lib/types/database";
 export default async function DiscoveryPage({
   searchParams,
 }: {
-  searchParams: { weight_class?: string; fight_style?: string; q?: string };
+  searchParams: Promise<{ weight_class?: string; fight_style?: string; q?: string }>;
 }) {
-  const supabase = createClient();
+  const params = await searchParams;
+  const supabase = await createClient();
 
   let query = supabase
     .from("profiles")
     .select("*")
     .order("followers_count", { ascending: false });
 
-  if (searchParams.weight_class) {
-    query = query.eq("weight_class", searchParams.weight_class);
+  if (params.weight_class) {
+    query = query.eq("weight_class", params.weight_class);
   }
-  if (searchParams.fight_style) {
-    query = query.eq("fight_style", searchParams.fight_style);
+  if (params.fight_style) {
+    query = query.eq("fight_style", params.fight_style);
   }
-  if (searchParams.q) {
+  if (params.q) {
     query = query.or(
-      `full_name.ilike.%${searchParams.q}%,username.ilike.%${searchParams.q}%`
+      `full_name.ilike.%${params.q}%,username.ilike.%${params.q}%`
     );
   }
 
