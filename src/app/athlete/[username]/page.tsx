@@ -8,13 +8,14 @@ import type { Profile, Video } from "@/lib/types/database";
 export async function generateMetadata({
   params,
 }: {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }) {
-  const supabase = createClient();
+  const { username } = await params;
+  const supabase = await createClient();
   const { data } = await supabase
     .from("profiles")
     .select("full_name, bio")
-    .eq("username", params.username)
+    .eq("username", username)
     .single();
 
   const profile = data as { full_name: string; bio: string | null } | null;
@@ -29,14 +30,15 @@ export async function generateMetadata({
 export default async function AthletePage({
   params,
 }: {
-  params: { username: string };
+  params: Promise<{ username: string }>;
 }) {
-  const supabase = createClient();
+  const { username } = await params;
+  const supabase = await createClient();
 
   const { data: profileData } = await supabase
     .from("profiles")
     .select("*")
-    .eq("username", params.username)
+    .eq("username", username)
     .single();
 
   const profile = profileData as Profile | null;
