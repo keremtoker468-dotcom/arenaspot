@@ -4,6 +4,8 @@ import DashboardForm from "@/components/DashboardForm";
 import VideoUpload from "@/components/VideoUpload";
 import type { Profile, Video } from "@/lib/types/database";
 
+export const dynamic = "force-dynamic";
+
 export const metadata = {
   title: "Dashboard — Arenaspot",
 };

@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import AthleteCard from "@/components/AthleteCard";
 import DiscoveryFilters from "@/components/DiscoveryFilters";
+
+export const dynamic = "force-dynamic";
 import type { Profile } from "@/lib/types/database";
 
 export default async function DiscoveryPage({
