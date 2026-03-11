@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Profile } from "@/lib/types/database";
 
@@ -11,10 +12,11 @@ export default function AthleteCard({ athlete }: { athlete: Profile }) {
     >
       <div className="relative h-48 bg-gray-100">
         {athlete.avatar_url ? (
-          <img
+          <Image
             src={athlete.avatar_url}
             alt={athlete.full_name}
-            className="h-full w-full object-cover"
+            fill
+            className="object-cover"
           />
         ) : (
           <div className="flex h-full items-center justify-center bg-gray-200">

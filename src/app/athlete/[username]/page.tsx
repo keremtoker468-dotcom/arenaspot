@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import FollowButton from "@/components/FollowButton";
@@ -60,12 +61,13 @@ export default async function AthletePage({
         <div className="h-32 bg-gradient-to-r from-accent to-red-400" />
         <div className="relative px-6 pb-6">
           <div className="-mt-12 flex items-end gap-4">
-            <div className="h-24 w-24 overflow-hidden rounded-xl border-4 border-white bg-gray-200 shadow-sm">
+            <div className="relative h-24 w-24 overflow-hidden rounded-xl border-4 border-white bg-gray-200 shadow-sm">
               {profile.avatar_url ? (
-                <img
+                <Image
                   src={profile.avatar_url}
                   alt={profile.full_name}
-                  className="h-full w-full object-cover"
+                  fill
+                  className="object-cover"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center">

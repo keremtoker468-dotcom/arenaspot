@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function FollowButton({ athleteId }: { athleteId: string }) {
@@ -8,11 +8,7 @@ export default function FollowButton({ athleteId }: { athleteId: string }) {
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
-  useEffect(() => {
-    checkFollowStatus();
-  }, [athleteId]);
-
-  const checkFollowStatus = async () => {
+  const checkFollowStatus = useCallback(async () => {
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -26,7 +22,11 @@ export default function FollowButton({ athleteId }: { athleteId: string }) {
       .single();
 
     setIsFollowing(!!data);
-  };
+  }, [supabase, athleteId]);
+
+  useEffect(() => {
+    checkFollowStatus();
+  }, [checkFollowStatus]);
 
   const handleFollow = async () => {
     const {
