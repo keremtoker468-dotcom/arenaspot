@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import FollowButton from "@/components/FollowButton";
+
+export const dynamic = "force-dynamic";
 import type { Profile, Video } from "@/lib/types/database";
 
 export async function generateMetadata({
