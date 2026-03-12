@@ -24,7 +24,7 @@ export async function GET(request: Request) {
           .single();
 
         if (!profile) {
-          // Create a default profile for OAuth users
+          // Create a minimal placeholder profile for OAuth users
           const email = user.email ?? "";
           const name =
             user.user_metadata?.full_name ??
@@ -41,6 +41,9 @@ export async function GET(request: Request) {
             full_name: name,
             role: "fan",
           });
+
+          // New user — send to onboarding
+          return NextResponse.redirect(`${origin}/onboarding`);
         }
       }
 

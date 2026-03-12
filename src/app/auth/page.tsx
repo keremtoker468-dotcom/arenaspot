@@ -3,17 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { UserRole } from "@/lib/types/database";
+import { CheckCircle } from "lucide-react";
 
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
-  const [username, setUsername] = useState("");
-  const [role, setRole] = useState<UserRole>("athlete");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [confirmEmail, setConfirmEmail] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -36,39 +34,89 @@ export default function AuthPage() {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback`,
+          },
         });
 
         if (signUpError) throw signUpError;
 
-        if (data.user) {
-          const { error: profileError } = await supabase
-            .from("profiles")
-            .insert({
-              id: data.user.id,
-              username: username.toLowerCase().trim(),
-              full_name: fullName.trim(),
-              role,
-            });
+        if (data.session) {
+          // Email confirmation disabled — session active, create profile
+          const user = data.user!;
+          const emailPrefix = email
+            .split("@")[0]
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "");
 
-          if (profileError) throw profileError;
+          await supabase.from("profiles").insert({
+            id: user.id,
+            username: `${emailPrefix}_${Date.now().toString(36)}`,
+            full_name: email.split("@")[0],
+            role: "fan",
+          });
+
+          router.push("/onboarding");
+        } else {
+          // Email confirmation required
+          setConfirmEmail(true);
         }
+        return;
       } else {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { data, error: signInError } =
+          await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
 
         if (signInError) throw signInError;
+
+        // Check if user has a profile
+        if (data.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", data.user.id)
+            .single();
+
+          if (!profile) {
+            router.push("/onboarding");
+            return;
+          }
+        }
       }
 
       router.push("/");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Bir hata oluştu");
+      setError(err instanceof Error ? err.message : "Bir hata olustu");
     } finally {
       setLoading(false);
     }
   };
+
+  if (confirmEmail) {
+    return (
+      <div className="flex min-h-screen items-center justify-center px-4">
+        <div className="w-full max-w-md text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#bbf7d0] bg-[#f0fdf4] text-[#16a34a]">
+            <CheckCircle size={28} />
+          </div>
+          <h1 className="mb-2 text-[28px] font-black">E-postani kontrol et</h1>
+          <p className="mb-6 font-body text-sm leading-[1.6] text-muted">
+            <span className="font-semibold text-foreground">{email}</span> adresine
+            bir dogrulama linki gonderdik. Linke tiklayarak hesabini aktif et.
+          </p>
+          <button
+            onClick={() => router.push("/")}
+            className="w-full rounded-[9px] bg-accent px-4 py-[10px] font-heading text-sm font-extrabold text-white transition-colors hover:bg-accent-dark"
+          >
+            Ana Sayfaya Don
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
@@ -78,12 +126,12 @@ export default function AuthPage() {
             A
           </div>
           <h1 className="text-[28px] font-black">
-            {isSignUp ? "Arenaspot'a Katıl" : "Hoş Geldin"}
+            {isSignUp ? "Arenaspot'a Katil" : "Hos Geldin"}
           </h1>
           <p className="mt-2 font-body text-sm text-muted">
             {isSignUp
-              ? "Hesabını oluştur ve platforma katıl"
-              : "Hesabına giriş yap"}
+              ? "Hesabini olustur ve platforma katil"
+              : "Hesabina giris yap"}
           </p>
         </div>
 
@@ -119,52 +167,6 @@ export default function AuthPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {isSignUp && (
-            <>
-              <div>
-                <label className="mb-1 block font-body text-sm font-medium text-muted">
-                  Ad Soyad
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full rounded-[8px] border border-border px-3 py-2 font-body text-sm outline-none focus:border-accent"
-                  placeholder="Kaan Demir"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block font-body text-sm font-medium text-muted">
-                  Kullanıcı Adı
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full rounded-[8px] border border-border px-3 py-2 font-body text-sm outline-none focus:border-accent"
-                  placeholder="kaandemir"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block font-body text-sm font-medium text-muted">
-                  Hesap Tipi
-                </label>
-                <select
-                  value={role}
-                  onChange={(e) => setRole(e.target.value as UserRole)}
-                  className="w-full rounded-[8px] border border-border px-3 py-2 font-body text-sm outline-none focus:border-accent"
-                >
-                  <option value="athlete">Sporcu</option>
-                  <option value="fan">Fan</option>
-                  <option value="gym">Salon / Gym Sahibi</option>
-                  <option value="pt">Personal Trainer</option>
-                </select>
-              </div>
-            </>
-          )}
-
           <div>
             <label className="mb-1 block font-body text-sm font-medium text-muted">
               E-posta
@@ -181,7 +183,7 @@ export default function AuthPage() {
 
           <div>
             <label className="mb-1 block font-body text-sm font-medium text-muted">
-              Şifre
+              Sifre
             </label>
             <input
               type="password"
@@ -206,15 +208,15 @@ export default function AuthPage() {
             className="w-full rounded-[9px] bg-accent px-4 py-[10px] font-heading text-sm font-extrabold text-white transition-colors hover:bg-accent-dark disabled:opacity-50"
           >
             {loading
-              ? "Yükleniyor..."
+              ? "Yukleniyor..."
               : isSignUp
-                ? "Hesap Oluştur"
-                : "Giriş Yap"}
+                ? "Hesap Olustur"
+                : "Giris Yap"}
           </button>
         </form>
 
         <p className="mt-6 text-center font-body text-sm text-muted">
-          {isSignUp ? "Zaten hesabın var mı?" : "Hesabın yok mu?"}{" "}
+          {isSignUp ? "Zaten hesabin var mi?" : "Hesabin yok mu?"}{" "}
           <button
             onClick={() => {
               setIsSignUp(!isSignUp);
@@ -222,7 +224,7 @@ export default function AuthPage() {
             }}
             className="font-semibold text-accent hover:text-accent-dark"
           >
-            {isSignUp ? "Giriş Yap" : "Kayıt Ol"}
+            {isSignUp ? "Giris Yap" : "Kayit Ol"}
           </button>
         </p>
       </div>
