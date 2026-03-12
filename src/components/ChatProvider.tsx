@@ -91,15 +91,6 @@ export default function AppProvider({
     }
   };
 
-  const handleAuthComplete = (
-    authRole: AppRole,
-    authCoachType: CoachType | null
-  ) => {
-    setAuthModal(false);
-    setRole(authRole);
-    if (authRole === "coach" && authCoachType) setCoachType(authCoachType);
-  };
-
   return (
     <AppContext.Provider
       value={{
@@ -124,10 +115,7 @@ export default function AppProvider({
       )}
 
       {authModal && (
-        <AuthModal
-          onClose={() => setAuthModal(false)}
-          onComplete={handleAuthComplete}
-        />
+        <AuthModal onClose={() => setAuthModal(false)} />
       )}
     </AppContext.Provider>
   );
