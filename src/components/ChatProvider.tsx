@@ -88,7 +88,22 @@ export default function AppProvider({
         setRole("coach");
         setCoachType(r);
       }
+    } else {
+      // User authenticated but no profile — redirect to onboarding
+      const path = window.location.pathname;
+      if (path !== "/onboarding" && path !== "/auth/callback") {
+        window.location.href = "/onboarding";
+      }
     }
+  };
+
+  const handleAuthComplete = (
+    authRole: AppRole,
+    authCoachType: CoachType | null
+  ) => {
+    setAuthModal(false);
+    setRole(authRole);
+    if (authRole === "coach" && authCoachType) setCoachType(authCoachType);
   };
 
   return (
@@ -115,7 +130,10 @@ export default function AppProvider({
       )}
 
       {authModal && (
-        <AuthModal onClose={() => setAuthModal(false)} />
+        <AuthModal
+          onClose={() => setAuthModal(false)}
+          onComplete={handleAuthComplete}
+        />
       )}
     </AppContext.Provider>
   );

@@ -3,14 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { X, Mail, CheckCircle } from "lucide-react";
+import type { AppRole, CoachType } from "@/lib/types/app";
+import { Mail, X, CheckCircle } from "lucide-react";
 
 interface AuthModalProps {
   onClose: () => void;
+  onComplete: (role: AppRole, coachType: CoachType | null) => void;
 }
 
-export default function AuthModal({ onClose }: AuthModalProps) {
-  const [isSignUp, setIsSignUp] = useState(false);
+type AuthMode = "login" | "signup";
+
+export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
+  const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -34,7 +38,7 @@ export default function AuthModal({ onClose }: AuthModalProps) {
     setLoading(true);
 
     try {
-      if (isSignUp) {
+      if (mode === "signup") {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
@@ -46,8 +50,6 @@ export default function AuthModal({ onClose }: AuthModalProps) {
         if (signUpError) throw signUpError;
 
         if (data.session) {
-          // Email confirmation disabled — session is active
-          // Create profile and go to onboarding
           const user = data.user!;
           const emailPrefix = email
             .split("@")[0]
@@ -64,7 +66,6 @@ export default function AuthModal({ onClose }: AuthModalProps) {
           onClose();
           router.push("/onboarding");
         } else {
-          // Email confirmation required — show message
           setConfirmEmail(true);
         }
         return;
@@ -77,20 +78,26 @@ export default function AuthModal({ onClose }: AuthModalProps) {
 
         if (signInError) throw signInError;
 
-        // Check if user has a profile, if not send to onboarding
         if (data.user) {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("id")
+            .select("id, role")
             .eq("id", data.user.id)
             .single();
 
-          onClose();
           if (!profile) {
+            onClose();
             router.push("/onboarding");
+          } else {
+            const dbRole = profile.role;
+            if (dbRole === "athlete") {
+              onComplete("athlete", null);
+            } else if (dbRole === "fan") {
+              onComplete("fan", null);
+            } else {
+              onComplete("coach", dbRole as CoachType);
+            }
           }
-        } else {
-          onClose();
         }
       }
     } catch (err) {
@@ -113,13 +120,19 @@ export default function AuthModal({ onClose }: AuthModalProps) {
         <div className="flex items-start justify-between px-7 pt-6">
           <div>
             <h2 className="text-[22px] font-black tracking-[-0.3px]">
-              {isSignUp ? "Arenaspot'a Katil" : "Hos Geldin"}
+              {confirmEmail
+                ? "E-postani kontrol et"
+                : mode === "signup"
+                  ? "Arenaspot&apos;a Katil"
+                  : "Hos Geldin"}
             </h2>
-            <p className="mt-1 font-body text-sm text-muted">
-              {isSignUp
-                ? "Hesabini olustur ve platforma katil"
-                : "Hesabina giris yap"}
-            </p>
+            {!confirmEmail && (
+              <p className="mt-1 font-body text-sm text-muted">
+                {mode === "signup"
+                  ? "Hesabini olustur ve platforma katil"
+                  : "Hesabina giris yap"}
+              </p>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -136,10 +149,10 @@ export default function AuthModal({ onClose }: AuthModalProps) {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#bbf7d0] bg-[#f0fdf4] text-[#16a34a]">
                 <CheckCircle size={28} />
               </div>
-              <h3 className="mb-2 text-[20px] font-black">E-postani kontrol et</h3>
               <p className="mb-6 font-body text-sm leading-[1.6] text-muted">
-                <span className="font-semibold text-foreground">{email}</span> adresine
-                bir dogrulama linki gonderdik. Linke tiklayarak hesabini aktif et.
+                <span className="font-semibold text-foreground">{email}</span>{" "}
+                adresine bir dogrulama linki gonderdik. Linke tiklayarak
+                hesabini aktif et.
               </p>
               <button
                 onClick={onClose}
@@ -241,22 +254,24 @@ export default function AuthModal({ onClose }: AuthModalProps) {
                   <Mail size={16} />
                   {loading
                     ? "Yukleniyor..."
-                    : isSignUp
+                    : mode === "signup"
                       ? "Hesap Olustur"
                       : "Giris Yap"}
                 </button>
               </form>
 
               <p className="mt-5 text-center font-body text-sm text-muted">
-                {isSignUp ? "Zaten hesabin var mi?" : "Hesabin yok mu?"}{" "}
+                {mode === "signup"
+                  ? "Zaten hesabin var mi?"
+                  : "Hesabin yok mu?"}{" "}
                 <button
                   onClick={() => {
-                    setIsSignUp(!isSignUp);
+                    setMode(mode === "signup" ? "login" : "signup");
                     setError(null);
                   }}
                   className="bg-transparent p-0 font-semibold text-accent hover:text-accent-dark"
                 >
-                  {isSignUp ? "Giris Yap" : "Kayit Ol"}
+                  {mode === "signup" ? "Giris Yap" : "Kayit Ol"}
                 </button>
               </p>
             </>

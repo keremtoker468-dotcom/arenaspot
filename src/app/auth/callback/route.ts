@@ -11,7 +11,6 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
-      // Check if user has a profile, if not they'll need to create one
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -19,12 +18,12 @@ export async function GET(request: Request) {
       if (user) {
         const { data: profile } = await supabase
           .from("profiles")
-          .select("id")
+          .select("id, username")
           .eq("id", user.id)
           .single();
 
         if (!profile) {
-          // Create a minimal placeholder profile for OAuth users
+          // New OAuth user — create a temporary profile
           const email = user.email ?? "";
           const name =
             user.user_metadata?.full_name ??
@@ -35,14 +34,20 @@ export async function GET(request: Request) {
             .toLowerCase()
             .replace(/[^a-z0-9]/g, "");
 
-          await supabase.from("profiles").insert({
-            id: user.id,
-            username: `${username}_${Date.now().toString(36)}`,
-            full_name: name,
-            role: "fan",
-          });
+          const { error: insertError } = await supabase
+            .from("profiles")
+            .insert({
+              id: user.id,
+              username: `${username}_${Date.now().toString(36)}`,
+              full_name: name,
+              role: "fan",
+            });
 
-          // New user — send to onboarding
+          if (insertError) {
+            console.error("Profile creation error:", insertError);
+          }
+
+          // Send new users to onboarding
           return NextResponse.redirect(`${origin}/onboarding`);
         }
       }
@@ -51,6 +56,5 @@ export async function GET(request: Request) {
     }
   }
 
-  // Return to auth page on error
   return NextResponse.redirect(`${origin}/auth`);
 }
