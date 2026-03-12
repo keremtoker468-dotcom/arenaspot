@@ -44,7 +44,6 @@ export default function OnboardingPage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
-  const [hasProfile, setHasProfile] = useState<boolean | null>(null);
 
   // Basic fields
   const [fullName, setFullName] = useState("");
@@ -82,11 +81,8 @@ export default function OnboardingPage() {
         .single()
         .then(({ data: profile }) => {
           if (profile) {
-            setHasProfile(true);
             if (profile.username) setUsername(profile.username);
             if (profile.full_name) setFullName(profile.full_name);
-          } else {
-            setHasProfile(false);
           }
         });
     });
@@ -138,38 +134,12 @@ export default function OnboardingPage() {
         updateData.fight_style = specializations.join(", ") || null;
       }
 
-      if (hasProfile) {
-        const { error: updateError } = await supabase
-          .from("profiles")
-          .update(updateData)
-          .eq("id", userId);
-        if (updateError) throw updateError;
-      } else {
-        const { error: insertError } = await supabase
-          .from("profiles")
-          .insert({
-            id: userId,
-            username: username.toLowerCase().trim(),
-            full_name: fullName.trim(),
-            role,
-            bio: bio.trim() || null,
-            city: city || null,
-            ...(role === "athlete" && {
-              fight_style: fightStyle || null,
-              weight_class: weightClass || null,
-              age: age ? Number(age) : null,
-              record_w: Number(recordW),
-              record_l: Number(recordL),
-              record_d: Number(recordD),
-            }),
-            ...(role === "gym" && { gym_name: gymName.trim() || null }),
-            ...(role === "pt" && {
-              workplace: workplace.trim() || null,
-              fight_style: specializations.join(", ") || null,
-            }),
-          });
-        if (insertError) throw insertError;
-      }
+      // Profile is always auto-created by database trigger, so always update
+      const { error: updateError } = await supabase
+        .from("profiles")
+        .update(updateData)
+        .eq("id", userId);
+      if (updateError) throw updateError;
 
       setStep("done");
     } catch (err) {

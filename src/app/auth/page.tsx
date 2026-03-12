@@ -33,20 +33,7 @@ export default function AuthPage() {
         if (signUpError) throw signUpError;
 
         if (data.session) {
-          // Email confirmation disabled — session active, create profile
-          const user = data.user!;
-          const emailPrefix = email
-            .split("@")[0]
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "");
-
-          await supabase.from("profiles").insert({
-            id: user.id,
-            username: `${emailPrefix}_${Date.now().toString(36)}`,
-            full_name: email.split("@")[0],
-            role: "fan",
-          });
-
+          // Profile is auto-created by database trigger
           router.push("/onboarding");
         } else {
           // Email confirmation required
