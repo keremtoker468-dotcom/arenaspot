@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { AppRole, CoachType } from "@/lib/types/app";
-import { Mail, X, CheckCircle } from "lucide-react";
+import { Mail, X } from "lucide-react";
 
 interface AuthModalProps {
   onClose: () => void;
@@ -19,7 +19,6 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [confirmEmail, setConfirmEmail] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -41,11 +40,11 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
         if (signUpError) throw signUpError;
 
         if (data.session) {
-          // Profile is auto-created by database trigger
+          // Profile is auto-created by database trigger (email auto-confirmed)
           onClose();
           router.push("/onboarding");
         } else {
-          setConfirmEmail(true);
+          throw new Error("Kayit basarisiz. Lutfen tekrar deneyin.");
         }
         return;
       } else {
@@ -99,19 +98,15 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
         <div className="flex items-start justify-between px-7 pt-6">
           <div>
             <h2 className="text-[22px] font-black tracking-[-0.3px]">
-              {confirmEmail
-                ? "E-postani kontrol et"
-                : mode === "signup"
-                  ? "Arenaspot&apos;a Katil"
-                  : "Hos Geldin"}
+              {mode === "signup"
+                ? "Arenaspot&apos;a Katil"
+                : "Hos Geldin"}
             </h2>
-            {!confirmEmail && (
-              <p className="mt-1 font-body text-sm text-muted">
-                {mode === "signup"
-                  ? "Hesabini olustur ve platforma katil"
-                  : "Hesabina giris yap"}
-              </p>
-            )}
+            <p className="mt-1 font-body text-sm text-muted">
+              {mode === "signup"
+                ? "Hesabini olustur ve platforma katil"
+                : "Hesabina giris yap"}
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -123,25 +118,6 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
 
         {/* Body */}
         <div className="px-7 pb-7 pt-6">
-          {confirmEmail ? (
-            <div className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#bbf7d0] bg-[#f0fdf4] text-[#16a34a]">
-                <CheckCircle size={28} />
-              </div>
-              <p className="mb-6 font-body text-sm leading-[1.6] text-muted">
-                <span className="font-semibold text-foreground">{email}</span>{" "}
-                adresine bir dogrulama linki gonderdik. Linke tiklayarak
-                hesabini aktif et.
-              </p>
-              <button
-                onClick={onClose}
-                className="w-full rounded-[9px] bg-accent px-4 py-[13px] font-heading text-sm font-extrabold text-white transition-colors hover:bg-accent-dark"
-              >
-                Tamam
-              </button>
-            </div>
-          ) : (
-            <>
               {/* OAuth — disabled until providers are configured in Supabase Dashboard */}
               <button
                 disabled
@@ -240,8 +216,6 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
                   {mode === "signup" ? "Giris Yap" : "Kayit Ol"}
                 </button>
               </p>
-            </>
-          )}
         </div>
       </div>
     </div>

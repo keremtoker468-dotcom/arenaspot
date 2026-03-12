@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { CheckCircle } from "lucide-react";
 
 export default function AuthPage() {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -11,7 +10,6 @@ export default function AuthPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [confirmEmail, setConfirmEmail] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -33,11 +31,10 @@ export default function AuthPage() {
         if (signUpError) throw signUpError;
 
         if (data.session) {
-          // Profile is auto-created by database trigger
+          // Profile is auto-created by database trigger (email auto-confirmed)
           router.push("/onboarding");
         } else {
-          // Email confirmation required
-          setConfirmEmail(true);
+          throw new Error("Kayit basarisiz. Lutfen tekrar deneyin.");
         }
         return;
       } else {
@@ -72,29 +69,6 @@ export default function AuthPage() {
       setLoading(false);
     }
   };
-
-  if (confirmEmail) {
-    return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-md text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-[#bbf7d0] bg-[#f0fdf4] text-[#16a34a]">
-            <CheckCircle size={28} />
-          </div>
-          <h1 className="mb-2 text-[28px] font-black">E-postani kontrol et</h1>
-          <p className="mb-6 font-body text-sm leading-[1.6] text-muted">
-            <span className="font-semibold text-foreground">{email}</span> adresine
-            bir dogrulama linki gonderdik. Linke tiklayarak hesabini aktif et.
-          </p>
-          <button
-            onClick={() => router.push("/")}
-            className="w-full rounded-[9px] bg-accent px-4 py-[10px] font-heading text-sm font-extrabold text-white transition-colors hover:bg-accent-dark"
-          >
-            Ana Sayfaya Don
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4">
