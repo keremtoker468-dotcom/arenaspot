@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
 import type { Profile, Video } from "@/lib/types/database";
-import type { AppRole } from "@/app/page";
+import type { AppRole } from "@/lib/types/app";
 import FollowButton from "@/components/FollowButton";
+import { ArrowLeft, MessageSquare, Copy, Link2 } from "lucide-react";
 
 interface AthleteProfileProps {
   athlete: Profile;
@@ -19,7 +20,7 @@ interface AthleteProfileProps {
     style?: string;
     city?: string;
   }) => void;
-  user: User | null;
+  user: import("@supabase/supabase-js").User | null;
 }
 
 export default function AthleteProfile({
@@ -31,6 +32,7 @@ export default function AthleteProfile({
   const [videos, setVideos] = useState<Video[]>([]);
   const [similarAthletes, setSimilarAthletes] = useState<Profile[]>([]);
   const supabase = createClient();
+  const router = useRouter();
 
   const getInitials = (name: string) => {
     const parts = name.split(" ");
@@ -40,7 +42,6 @@ export default function AthleteProfile({
   };
 
   useEffect(() => {
-    // Fetch videos
     supabase
       .from("videos")
       .select("*")
@@ -48,7 +49,6 @@ export default function AthleteProfile({
       .order("created_at", { ascending: false })
       .then(({ data }) => setVideos((data ?? []) as Video[]));
 
-    // Fetch similar athletes
     if (athlete.fight_style) {
       supabase
         .from("profiles")
@@ -65,25 +65,25 @@ export default function AthleteProfile({
   const info = [
     ["Stil", athlete.fight_style],
     ["Kilo", athlete.weight_class],
-    ["Yaş", athlete.age ? `${athlete.age}` : null],
-    ["Şehir", athlete.city],
+    ["Yas", athlete.age ? `${athlete.age}` : null],
+    ["Sehir", athlete.city],
     ["Gym", athlete.gym_name],
-    ["Takipçi", athlete.followers_count.toLocaleString()],
+    ["Takipci", athlete.followers_count.toLocaleString()],
   ].filter(([, v]) => v);
 
   return (
-    <div className="mx-auto max-w-[1200px] px-10 py-6">
+    <div className="mx-auto max-w-[1200px] px-6 py-6 lg:px-10">
       <button
         onClick={onBack}
         className="mb-5 flex items-center gap-[5px] bg-transparent p-0 font-heading text-[13px] font-bold text-muted transition-colors hover:text-foreground"
       >
-        ← Keşfete Dön
+        <ArrowLeft size={14} />
+        Kesfete Don
       </button>
 
-      <div className="grid grid-cols-[280px_1fr_220px] gap-5">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[280px_1fr_220px]">
         {/* Left Column */}
         <div className="flex flex-col gap-[14px]">
-          {/* Profile Card */}
           <div className="relative overflow-hidden rounded-[12px] border border-border bg-white p-[22px]">
             <div className="absolute left-0 right-0 top-0 h-1 bg-accent" />
             <div className="mx-auto mb-[14px] flex h-[72px] w-[72px] items-center justify-center rounded-[14px] border-2 border-accent-border bg-accent-light text-[26px] font-black text-accent">
@@ -111,7 +111,7 @@ export default function AthleteProfile({
 
             {(role === "athlete" || role === "coach") && (
               <button
-                className="mt-2 w-full rounded-[6px] bg-foreground px-4 py-[10px] font-heading text-[12px] font-extrabold text-white transition-colors hover:bg-[#333]"
+                className="mt-2 flex w-full items-center justify-center gap-[6px] rounded-[6px] bg-foreground px-4 py-[10px] font-heading text-[12px] font-extrabold text-white transition-colors hover:bg-[#333]"
                 onClick={() =>
                   onOpenChat({
                     id: athlete.id,
@@ -123,12 +123,12 @@ export default function AthleteProfile({
                   })
                 }
               >
-                💬 {role === "coach" ? "İletişim Kur" : "Mesaj Gönder"}
+                <MessageSquare size={13} />
+                {role === "coach" ? "Iletisim Kur" : "Mesaj Gonder"}
               </button>
             )}
           </div>
 
-          {/* Info Card */}
           <div className="rounded-[12px] border border-border bg-white p-[22px]">
             <div className="mb-[14px] text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
               Bilgiler
@@ -152,14 +152,13 @@ export default function AthleteProfile({
 
         {/* Center Column */}
         <div className="flex flex-col gap-4">
-          {/* Record */}
           <div className="rounded-[12px] border border-border bg-white p-[22px]">
             <div className="mb-[14px] text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
-              Dövüş Rekoru
+              Dovus Rekoru
             </div>
             <div className="flex gap-3">
               <div className="flex-1 rounded-[10px] border border-[#bbf7d0] bg-[#f0fdf4] p-[22px_12px] text-center">
-                <div className="text-[52px] font-black leading-none text-[#16a34a]">
+                <div className="text-[40px] font-black leading-none text-[#16a34a] lg:text-[52px]">
                   {athlete.record_w}
                 </div>
                 <div className="mt-[5px] text-[12px] font-bold tracking-[2px] text-[#16a34a]">
@@ -167,7 +166,7 @@ export default function AthleteProfile({
                 </div>
               </div>
               <div className="flex-1 rounded-[10px] border border-accent-border bg-accent-light p-[22px_12px] text-center">
-                <div className="text-[52px] font-black leading-none text-accent">
+                <div className="text-[40px] font-black leading-none text-accent lg:text-[52px]">
                   {athlete.record_l}
                 </div>
                 <div className="mt-[5px] text-[12px] font-bold tracking-[2px] text-accent">
@@ -175,7 +174,7 @@ export default function AthleteProfile({
                 </div>
               </div>
               <div className="flex-1 rounded-[10px] border border-border bg-surface p-[22px_12px] text-center">
-                <div className="text-[52px] font-black leading-none text-faint">
+                <div className="text-[40px] font-black leading-none text-faint lg:text-[52px]">
                   {athlete.record_d}
                 </div>
                 <div className="mt-[5px] text-[12px] font-bold tracking-[2px] text-faint">
@@ -185,7 +184,6 @@ export default function AthleteProfile({
             </div>
           </div>
 
-          {/* Highlights */}
           <div className="rounded-[12px] border border-border bg-white p-[22px]">
             <div className="mb-4 flex items-center justify-between">
               <div className="text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
@@ -196,7 +194,7 @@ export default function AthleteProfile({
               </span>
             </div>
             {videos.length > 0 ? (
-              <div className="grid grid-cols-2 gap-[10px]">
+              <div className="grid grid-cols-1 gap-[10px] sm:grid-cols-2">
                 {videos.map((video, i) => (
                   <div
                     key={video.id}
@@ -237,7 +235,7 @@ export default function AthleteProfile({
               </div>
             ) : (
               <p className="py-8 text-center font-body text-sm text-faint">
-                Henüz video yüklenmemiş
+                Henuz video yuklenmemis
               </p>
             )}
           </div>
@@ -245,7 +243,6 @@ export default function AthleteProfile({
 
         {/* Right Column */}
         <div className="flex flex-col gap-[14px]">
-          {/* Similar Athletes */}
           {similarAthletes.length > 0 && (
             <div className="rounded-[12px] border border-border bg-white p-[22px]">
               <div className="mb-[14px] text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
@@ -254,7 +251,8 @@ export default function AthleteProfile({
               {similarAthletes.map((f) => (
                 <div
                   key={f.id}
-                  className="flex cursor-pointer items-center gap-[10px] border-b border-border py-[10px]"
+                  className="flex cursor-pointer items-center gap-[10px] border-b border-border py-[10px] transition-colors hover:bg-surface"
+                  onClick={() => router.push(`/athlete/${f.username}`)}
                 >
                   <div className="flex h-9 w-9 items-center justify-center rounded-[8px] border-[1.5px] border-accent-border bg-accent-light text-[11px] font-black text-accent">
                     {getInitials(f.full_name)}
@@ -270,9 +268,9 @@ export default function AthleteProfile({
             </div>
           )}
 
-          {/* Profile Link */}
           <div className="rounded-[12px] border border-border bg-white p-[22px]">
-            <div className="mb-[14px] text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
+            <div className="mb-[14px] flex items-center gap-[6px] text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
+              <Link2 size={12} />
               Profil Linki
             </div>
             <div className="mb-[10px] break-all rounded-[7px] border border-border bg-surface p-[9px_12px] font-body text-[12px] text-muted">
@@ -284,8 +282,9 @@ export default function AthleteProfile({
                   `arenaspot.com/${athlete.username}`
                 )
               }
-              className="w-full rounded-[7px] border border-accent-border bg-accent-light px-4 py-[9px] font-heading text-[12px] font-bold text-accent"
+              className="flex w-full items-center justify-center gap-[6px] rounded-[7px] border border-accent-border bg-accent-light px-4 py-[9px] font-heading text-[12px] font-bold text-accent transition-colors hover:bg-accent hover:text-white"
             >
+              <Copy size={12} />
               Linki Kopyala
             </button>
           </div>

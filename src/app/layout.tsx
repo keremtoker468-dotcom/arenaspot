@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import AppProvider from "@/components/ChatProvider";
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "Arenaspot — Dövüş Sporları Platformu",
+  title: "Arenaspot — Dovus Sporlari Platformu",
   description:
-    "Sporcu keşfet, salonunu tanıt ya da favori dövüşçülerini takip et.",
+    "Sporcu kesfet, salonunu tanit ya da favori dovusculerini takip et.",
 };
 
 export default function RootLayout({
@@ -30,7 +32,10 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
-        {children}
+        <AppProvider>
+          <Navbar />
+          <main>{children}</main>
+        </AppProvider>
       </body>
     </html>
   );

@@ -19,11 +19,11 @@ export async function generateMetadata({
     .single();
 
   const profile = data as { full_name: string; bio: string | null } | null;
-  if (!profile) return { title: "Sporcu Bulunamadı" };
+  if (!profile) return { title: "Sporcu Bulunamadi" };
 
   return {
     title: `${profile.full_name} — Arenaspot`,
-    description: profile.bio ?? `${profile.full_name} Arenaspot profilini keşfet`,
+    description: profile.bio ?? `${profile.full_name} Arenaspot profilini kesfet`,
   };
 }
 
@@ -62,22 +62,23 @@ export default async function AthletePage({
   const info = [
     ["Stil", profile.fight_style],
     ["Kilo", profile.weight_class],
-    ["Yaş", profile.age ? `${profile.age}` : null],
-    ["Şehir", profile.city],
+    ["Yas", profile.age ? `${profile.age}` : null],
+    ["Sehir", profile.city],
     ["Gym", profile.gym_name],
-    ["Takipçi", profile.followers_count.toLocaleString()],
+    ["Takipci", profile.followers_count.toLocaleString()],
   ].filter(([, v]) => v);
 
   return (
-    <div className="mx-auto max-w-[1200px] px-10 py-6 font-heading">
+    <div className="mx-auto max-w-[1200px] px-6 py-6 lg:px-10">
       <Link
-        href="/"
+        href="/discover"
         className="mb-5 inline-flex items-center gap-[5px] text-[13px] font-bold text-muted transition-colors hover:text-foreground"
       >
-        ← Ana Sayfa
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+        Kesfete Don
       </Link>
 
-      <div className="grid grid-cols-[280px_1fr_220px] gap-5">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[280px_1fr_220px]">
         {/* Left Column */}
         <div className="flex flex-col gap-[14px]">
           <div className="relative overflow-hidden rounded-[12px] border border-border bg-white p-[22px]">
@@ -127,11 +128,11 @@ export default async function AthletePage({
         <div className="flex flex-col gap-4">
           <div className="rounded-[12px] border border-border bg-white p-[22px]">
             <div className="mb-[14px] text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
-              Dövüş Rekoru
+              Dovus Rekoru
             </div>
             <div className="flex gap-3">
               <div className="flex-1 rounded-[10px] border border-[#bbf7d0] bg-[#f0fdf4] p-[22px_12px] text-center">
-                <div className="text-[52px] font-black leading-none text-[#16a34a]">
+                <div className="text-[40px] font-black leading-none text-[#16a34a] lg:text-[52px]">
                   {profile.record_w}
                 </div>
                 <div className="mt-[5px] text-[12px] font-bold tracking-[2px] text-[#16a34a]">
@@ -139,7 +140,7 @@ export default async function AthletePage({
                 </div>
               </div>
               <div className="flex-1 rounded-[10px] border border-accent-border bg-accent-light p-[22px_12px] text-center">
-                <div className="text-[52px] font-black leading-none text-accent">
+                <div className="text-[40px] font-black leading-none text-accent lg:text-[52px]">
                   {profile.record_l}
                 </div>
                 <div className="mt-[5px] text-[12px] font-bold tracking-[2px] text-accent">
@@ -147,7 +148,7 @@ export default async function AthletePage({
                 </div>
               </div>
               <div className="flex-1 rounded-[10px] border border-border bg-surface p-[22px_12px] text-center">
-                <div className="text-[52px] font-black leading-none text-faint">
+                <div className="text-[40px] font-black leading-none text-faint lg:text-[52px]">
                   {profile.record_d}
                 </div>
                 <div className="mt-[5px] text-[12px] font-bold tracking-[2px] text-faint">
@@ -167,7 +168,7 @@ export default async function AthletePage({
               </span>
             </div>
             {videos.length > 0 ? (
-              <div className="grid grid-cols-2 gap-[10px]">
+              <div className="grid grid-cols-1 gap-[10px] sm:grid-cols-2">
                 {videos.map((video) => (
                   <div
                     key={video.id}
@@ -186,7 +187,7 @@ export default async function AthletePage({
               </div>
             ) : (
               <p className="py-8 text-center font-body text-sm text-faint">
-                Henüz video yüklenmemiş
+                Henuz video yuklenmemis
               </p>
             )}
           </div>

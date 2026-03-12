@@ -1,15 +1,26 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/lib/types/database";
-import type { AppRole, CoachType } from "@/app/page";
 import AthleteCard from "@/components/AthleteCard";
 import FollowButton from "@/components/FollowButton";
+import CoachTypeSelect from "@/components/CoachTypeSelect";
+import { useApp } from "@/components/ChatProvider";
+import { CardSkeleton } from "@/components/ui/Skeleton";
+import {
+  Search,
+  Briefcase,
+  User,
+  MapPin,
+  Users,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
 
 const STYLES_F = ["All", "MMA", "Boks", "Kickboks", "Muay Thai"];
-const CITIES_F = ["All", "İstanbul", "Ankara", "İzmir", "Bursa"];
+const CITIES_F = ["All", "Istanbul", "Ankara", "Izmir", "Bursa"];
 const WEIGHTS_F = [
   "All",
   "Featherweight",
@@ -19,28 +30,12 @@ const WEIGHTS_F = [
   "Heavyweight",
 ];
 
-interface DiscoverPageProps {
-  role: AppRole | null;
-  coachType: CoachType | null;
-  onSelectAthlete: (athlete: Profile) => void;
-  onOpenChat: (chat: {
-    id: string;
-    name: string;
-    avatar: string;
-    type: "fighter" | "pt";
-    style?: string;
-    city?: string;
-  }) => void;
-  user: User | null;
-}
+export default function DiscoverPage() {
+  const { role, coachType, openChat, user, setCoachType } = useApp();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const showCoachSelect = searchParams.get("coachselect") === "1";
 
-export default function DiscoverPage({
-  role,
-  coachType,
-  onSelectAthlete,
-  onOpenChat,
-  user,
-}: DiscoverPageProps) {
   const [discoverTab, setDiscoverTab] = useState<"athletes" | "pts">(
     "athletes"
   );
@@ -51,6 +46,7 @@ export default function DiscoverPage({
   const [athletes, setAthletes] = useState<Profile[]>([]);
   const [pts, setPts] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const supabase = createClient();
 
@@ -96,243 +92,306 @@ export default function DiscoverPage({
       : name.substring(0, 2);
   };
 
-  return (
-    <div className="mx-auto grid max-w-[1200px] grid-cols-[240px_1fr] gap-0 px-10">
-      {/* Sidebar */}
-      <div className="border-r border-border p-[28px_28px_28px_0]">
-        <div className="mb-5 text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
-          Filtreler
-        </div>
+  if (showCoachSelect && role === "coach" && !coachType) {
+    return (
+      <CoachTypeSelect
+        onSelect={(type) => {
+          setCoachType(type);
+          router.replace("/discover");
+        }}
+      />
+    );
+  }
 
-        <div className="mb-6">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-faint">
-            Stil
-          </div>
-          {STYLES_F.map((s) => (
-            <button
-              key={s}
-              onClick={() => setFStyle(s)}
-              className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-sm font-semibold transition-all ${
-                fStyle === s
-                  ? "bg-accent-light font-bold text-accent"
-                  : "text-muted hover:bg-surface hover:text-foreground"
-              }`}
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-
-        <div className="mb-6">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-faint">
-            Şehir
-          </div>
-          {CITIES_F.map((c) => (
-            <button
-              key={c}
-              onClick={() => setFCity(c)}
-              className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-sm font-semibold transition-all ${
-                fCity === c
-                  ? "bg-accent-light font-bold text-accent"
-                  : "text-muted hover:bg-surface hover:text-foreground"
-              }`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-
-        <div>
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-faint">
-            Kilo Sınıfı
-          </div>
-          {WEIGHTS_F.map((w) => (
-            <button
-              key={w}
-              onClick={() => setFWeight(w)}
-              className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-[13px] font-semibold transition-all ${
-                fWeight === w
-                  ? "bg-accent-light font-bold text-accent"
-                  : "text-muted hover:bg-surface hover:text-foreground"
-              }`}
-            >
-              {w}
-            </button>
-          ))}
-        </div>
+  const filterSidebar = (
+    <div className="p-[28px_0]">
+      <div className="mb-5 text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
+        Filtreler
       </div>
 
-      {/* Main */}
-      <div className="p-[28px_0_28px_32px]">
-        <div className="mb-4">
-          <h2 className="mb-1 text-[36px] font-black tracking-[-0.5px]">
-            {role === "athlete"
-              ? "Sporcu Keşfet"
-              : role === "fan"
-                ? "Dövüşçüleri Keşfet"
-                : "Sporcuları Keşfet"}
-          </h2>
-          <p className="font-body text-sm text-muted">
-            {role === "athlete"
-              ? "Sparring partneri bul, rakiplerini tanı."
-              : role === "fan"
-                ? "Favori sporcularını takip et."
-                : coachType === "gym"
-                  ? "Yetenekli sporcuları bul. PT'lerle iş birliği yap."
-                  : "Yetenekli sporcuları bul ve onlara ulaş."}
-          </p>
+      <div className="mb-6">
+        <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-faint">
+          Stil
         </div>
+        {STYLES_F.map((s) => (
+          <button
+            key={s}
+            onClick={() => setFStyle(s)}
+            className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-sm font-semibold transition-all ${
+              fStyle === s
+                ? "bg-accent-light font-bold text-accent"
+                : "text-muted hover:bg-surface hover:text-foreground"
+            }`}
+          >
+            {s}
+          </button>
+        ))}
+      </div>
 
-        {/* Gym tabs */}
-        {role === "coach" && coachType === "gym" && (
-          <div className="mb-6 flex gap-0 border-b border-border">
-            <button
-              className={`border-b-2 px-5 py-[10px] font-heading text-sm font-bold tracking-[0.5px] transition-all ${
-                discoverTab === "athletes"
-                  ? "border-accent text-foreground"
-                  : "border-transparent text-faint hover:text-foreground"
-              }`}
-              onClick={() => setDiscoverTab("athletes")}
-            >
-              Sporcular
-            </button>
-            <button
-              className={`border-b-2 px-5 py-[10px] font-heading text-sm font-bold tracking-[0.5px] transition-all ${
-                discoverTab === "pts"
-                  ? "border-accent text-foreground"
-                  : "border-transparent text-faint hover:text-foreground"
-              }`}
-              onClick={() => setDiscoverTab("pts")}
-            >
-              PT&apos;ler
-              <span className="ml-[6px] rounded-[10px] bg-accent px-[6px] py-[1px] text-[10px] font-bold text-white">
-                İş Birliği
-              </span>
-            </button>
-          </div>
-        )}
+      <div className="mb-6">
+        <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-faint">
+          Sehir
+        </div>
+        {CITIES_F.map((c) => (
+          <button
+            key={c}
+            onClick={() => setFCity(c)}
+            className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-sm font-semibold transition-all ${
+              fCity === c
+                ? "bg-accent-light font-bold text-accent"
+                : "text-muted hover:bg-surface hover:text-foreground"
+            }`}
+          >
+            {c}
+          </button>
+        ))}
+      </div>
 
-        {/* Search */}
-        <div className="relative mb-5">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-faint">
-            🔍
+      <div>
+        <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-faint">
+          Kilo Sinifi
+        </div>
+        {WEIGHTS_F.map((w) => (
+          <button
+            key={w}
+            onClick={() => setFWeight(w)}
+            className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-[13px] font-semibold transition-all ${
+              fWeight === w
+                ? "bg-accent-light font-bold text-accent"
+                : "text-muted hover:bg-surface hover:text-foreground"
+            }`}
+          >
+            {w}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="mx-auto max-w-[1200px] px-6 lg:px-10">
+      {/* Mobile filter toggle */}
+      <button
+        onClick={() => setFiltersOpen(!filtersOpen)}
+        className="mt-4 flex items-center gap-2 rounded-[8px] border border-border px-4 py-[9px] font-heading text-[13px] font-bold text-muted transition-all hover:bg-surface lg:hidden"
+      >
+        <SlidersHorizontal size={14} />
+        Filtreler
+        {(fStyle !== "All" || fCity !== "All" || fWeight !== "All") && (
+          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
+            {[fStyle !== "All", fCity !== "All", fWeight !== "All"].filter(Boolean).length}
           </span>
-          <input
-            className="w-full rounded-[8px] border border-border py-[10px] pl-9 pr-[14px] font-body text-sm outline-none transition-colors focus:border-accent"
-            placeholder={
-              discoverTab === "pts" ? "PT ara..." : "Sporcu ara..."
-            }
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        )}
+      </button>
+
+      {/* Mobile filter drawer */}
+      {filtersOpen && (
+        <div className="fixed inset-0 z-[150] lg:hidden">
+          <div className="absolute inset-0 bg-black/30" onClick={() => setFiltersOpen(false)} />
+          <div className="absolute bottom-0 left-0 right-0 max-h-[70vh] overflow-y-auto rounded-t-[16px] bg-white px-6 pb-6 shadow-[0_-8px_32px_rgba(0,0,0,0.12)]">
+            <div className="flex items-center justify-between py-4">
+              <span className="text-[15px] font-black">Filtreler</span>
+              <button onClick={() => setFiltersOpen(false)}>
+                <X size={20} className="text-muted" />
+              </button>
+            </div>
+            {filterSidebar}
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-0 lg:grid-cols-[240px_1fr]">
+        {/* Desktop sidebar */}
+        <div className="hidden border-r border-border pr-[28px] lg:block">
+          {filterSidebar}
         </div>
 
-        {/* PT List (gym only) */}
-        {role === "coach" && coachType === "gym" && discoverTab === "pts" && (
-          <div>
-            <div className="mb-4 text-[13px] font-semibold text-faint">
-              {pts.length} PT bulundu
+        {/* Main */}
+        <div className="py-[28px] lg:pl-[32px]">
+          <div className="mb-4">
+            <h2 className="mb-1 text-[28px] font-black tracking-[-0.5px] sm:text-[36px]">
+              {role === "athlete"
+                ? "Sporcu Kesfet"
+                : role === "fan"
+                  ? "Dovusculeri Kesfet"
+                  : "Sporculari Kesfet"}
+            </h2>
+            <p className="font-body text-sm text-muted">
+              {role === "athlete"
+                ? "Sparring partneri bul, rakiplerini tani."
+                : role === "fan"
+                  ? "Favori sporcularini takip et."
+                  : coachType === "gym"
+                    ? "Yetenekli sporculari bul. PT'lerle is birligi yap."
+                    : "Yetenekli sporculari bul ve onlara ulas."}
+            </p>
+          </div>
+
+          {/* Gym tabs */}
+          {role === "coach" && coachType === "gym" && (
+            <div className="mb-6 flex gap-0 border-b border-border">
+              <button
+                className={`border-b-2 px-5 py-[10px] font-heading text-sm font-bold tracking-[0.5px] transition-all ${
+                  discoverTab === "athletes"
+                    ? "border-accent text-foreground"
+                    : "border-transparent text-faint hover:text-foreground"
+                }`}
+                onClick={() => setDiscoverTab("athletes")}
+              >
+                Sporcular
+              </button>
+              <button
+                className={`flex items-center gap-[6px] border-b-2 px-5 py-[10px] font-heading text-sm font-bold tracking-[0.5px] transition-all ${
+                  discoverTab === "pts"
+                    ? "border-accent text-foreground"
+                    : "border-transparent text-faint hover:text-foreground"
+                }`}
+                onClick={() => setDiscoverTab("pts")}
+              >
+                PT&apos;ler
+                <span className="rounded-[10px] bg-accent px-[6px] py-[1px] text-[10px] font-bold text-white">
+                  Is Birligi
+                </span>
+              </button>
             </div>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(290px,1fr))] gap-[14px]">
-              {pts.map((pt) => (
-                <div
-                  key={pt.id}
-                  className="relative overflow-hidden rounded-[12px] border border-border bg-white p-5"
-                >
-                  <div className="mb-[14px] flex items-start justify-between">
-                    <div className="flex items-center gap-[11px]">
-                      <div className="flex h-[50px] w-[50px] flex-shrink-0 items-center justify-center rounded-[11px] border-[1.5px] border-accent-border bg-accent-light text-[15px] font-black text-accent">
-                        {getInitials(pt.full_name)}
-                      </div>
-                      <div>
-                        <div className="text-[17px] font-extrabold">
-                          {pt.full_name}
+          )}
+
+          {/* Search */}
+          <div className="relative mb-5">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
+            <input
+              className="w-full rounded-[8px] border border-border py-[10px] pl-9 pr-[14px] font-body text-sm outline-none transition-colors focus:border-accent"
+              placeholder={
+                discoverTab === "pts" ? "PT ara..." : "Sporcu ara..."
+              }
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+
+          {/* PT List (gym only) */}
+          {role === "coach" && coachType === "gym" && discoverTab === "pts" && (
+            <div>
+              <div className="mb-4 text-[13px] font-semibold text-faint">
+                {pts.length} PT bulundu
+              </div>
+              <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 xl:grid-cols-3">
+                {pts.map((pt) => (
+                  <div
+                    key={pt.id}
+                    className="relative overflow-hidden rounded-[12px] border border-border bg-white p-5 transition-all hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
+                  >
+                    <div className="mb-[14px] flex items-start justify-between">
+                      <div className="flex items-center gap-[11px]">
+                        <div className="flex h-[50px] w-[50px] flex-shrink-0 items-center justify-center rounded-[11px] border-[1.5px] border-accent-border bg-accent-light text-[15px] font-black text-accent">
+                          {getInitials(pt.full_name)}
                         </div>
-                        <div className="mt-[1px] font-body text-[12px] text-faint">
-                          {pt.workplace || "Freelance"}
+                        <div>
+                          <div className="text-[17px] font-extrabold">
+                            {pt.full_name}
+                          </div>
+                          <div className="mt-[1px] font-body text-[12px] text-faint">
+                            {pt.workplace || "Freelance"}
+                          </div>
                         </div>
                       </div>
+                      <FollowButton athleteId={pt.id} />
                     </div>
-                    <FollowButton athleteId={pt.id} />
-                  </div>
 
-                  <div className="mb-3 flex flex-wrap gap-[6px]">
-                    <span className="inline-block rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
-                      👤 Personal Trainer
-                    </span>
-                    {pt.fight_style?.split(",").map((s) => (
-                      <span
-                        key={s}
-                        className="inline-block rounded-[5px] border border-accent-border bg-accent-light px-[9px] py-[3px] text-[12px] font-bold text-accent"
+                    <div className="mb-3 flex flex-wrap gap-[6px]">
+                      <span className="inline-flex items-center gap-1 rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
+                        <User size={11} />
+                        Personal Trainer
+                      </span>
+                      {pt.fight_style?.split(",").map((s) => (
+                        <span
+                          key={s}
+                          className="inline-block rounded-[5px] border border-accent-border bg-accent-light px-[9px] py-[3px] text-[12px] font-bold text-accent"
+                        >
+                          {s.trim()}
+                        </span>
+                      ))}
+                      {pt.city && (
+                        <span className="inline-flex items-center gap-1 rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
+                          <MapPin size={11} />
+                          {pt.city}
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mb-[14px] font-body text-[13px] leading-[1.5] text-muted">
+                      {pt.bio}
+                    </p>
+
+                    <div className="flex items-center justify-between border-t border-border pt-[10px]">
+                      <span className="inline-flex items-center gap-1 font-body text-[12px] text-faint">
+                        <Users size={12} />
+                        {pt.followers_count} takipci
+                      </span>
+                      <button
+                        onClick={() =>
+                          openChat({
+                            id: pt.id,
+                            name: pt.full_name,
+                            avatar: getInitials(pt.full_name),
+                            type: "pt",
+                            city: pt.city || undefined,
+                          })
+                        }
+                        className="inline-flex items-center gap-[5px] rounded-[6px] bg-foreground px-[13px] py-[6px] font-heading text-[12px] font-extrabold text-white transition-colors hover:bg-[#333]"
                       >
-                        {s.trim()}
-                      </span>
-                    ))}
-                    {pt.city && (
-                      <span className="inline-block rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
-                        📍 {pt.city}
-                      </span>
-                    )}
+                        <Briefcase size={12} />
+                        Is Teklifi
+                      </button>
+                    </div>
                   </div>
+                ))}
+              </div>
+            </div>
+          )}
 
-                  <p className="mb-[14px] font-body text-[13px] leading-[1.5] text-muted">
-                    {pt.bio}
-                  </p>
-
-                  <div className="flex items-center justify-between border-t border-border pt-[10px]">
-                    <span className="font-body text-[12px] text-faint">
-                      👥 {pt.followers_count} takipçi
-                    </span>
-                    <button
-                      onClick={() =>
-                        onOpenChat({
-                          id: pt.id,
-                          name: pt.full_name,
-                          avatar: getInitials(pt.full_name),
-                          type: "pt",
-                          city: pt.city || undefined,
+          {/* Athlete List */}
+          {discoverTab === "athletes" && (
+            <div>
+              <div className="mb-4 text-[13px] font-semibold text-faint">
+                {loading
+                  ? "Yukleniyor..."
+                  : `${athletes.length} sporcu bulundu`}
+              </div>
+              {loading ? (
+                <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 xl:grid-cols-3">
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <CardSkeleton key={i} />
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 xl:grid-cols-3">
+                  {athletes.map((f) => (
+                    <AthleteCard
+                      key={f.id}
+                      athlete={f}
+                      role={role}
+                      onSelect={() =>
+                        router.push(`/athlete/${f.username}`)
+                      }
+                      onMessage={() =>
+                        openChat({
+                          id: f.id,
+                          name: f.full_name,
+                          avatar: getInitials(f.full_name),
+                          type: "fighter",
+                          style: f.fight_style || undefined,
+                          city: f.city || undefined,
                         })
                       }
-                      className="rounded-[6px] bg-foreground px-[13px] py-[6px] font-heading text-[12px] font-extrabold text-white transition-colors hover:bg-[#333]"
-                    >
-                      💼 İş Teklifi
-                    </button>
-                  </div>
+                      user={user}
+                    />
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
-          </div>
-        )}
-
-        {/* Athlete List */}
-        {discoverTab === "athletes" && (
-          <div>
-            <div className="mb-4 text-[13px] font-semibold text-faint">
-              {loading ? "Yükleniyor..." : `${athletes.length} sporcu bulundu`}
-            </div>
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(290px,1fr))] gap-[14px]">
-              {athletes.map((f) => (
-                <AthleteCard
-                  key={f.id}
-                  athlete={f}
-                  role={role}
-                  onSelect={() => onSelectAthlete(f)}
-                  onMessage={() =>
-                    onOpenChat({
-                      id: f.id,
-                      name: f.full_name,
-                      avatar: getInitials(f.full_name),
-                      type: "fighter",
-                      style: f.fight_style || undefined,
-                      city: f.city || undefined,
-                    })
-                  }
-                  user={user}
-                />
-              ))}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

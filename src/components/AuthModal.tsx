@@ -2,7 +2,20 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { AppRole, CoachType } from "@/app/page";
+import type { AppRole, CoachType } from "@/lib/types/app";
+import {
+  Swords,
+  Eye,
+  Dumbbell,
+  Building2,
+  User,
+  Mail,
+  ArrowLeft,
+  X,
+  Check,
+  PartyPopper,
+  ChevronRight,
+} from "lucide-react";
 
 interface AuthModalProps {
   onClose: () => void;
@@ -17,9 +30,10 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
   const [authCoachType, setAuthCoachType] = useState<CoachType | null>(null);
   const supabase = createClient();
 
-  const steps: AuthStep[] = authRole === "coach"
-    ? ["method", "role", "coachtype", "done"]
-    : ["method", "role", "done"];
+  const steps: AuthStep[] =
+    authRole === "coach"
+      ? ["method", "role", "coachtype", "done"]
+      : ["method", "role", "done"];
 
   const currentIdx = steps.indexOf(step);
 
@@ -68,7 +82,7 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
           <div>
             {step === "method" && (
               <h2 className="text-[22px] font-black tracking-[-0.3px]">
-                Arenaspot&apos;a Katıl
+                Arenaspot&apos;a Katil
               </h2>
             )}
             {step === "role" && (
@@ -78,28 +92,29 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
             )}
             {step === "coachtype" && (
               <h2 className="text-[22px] font-black tracking-[-0.3px]">
-                Antrenör tipi
+                Antrenor tipi
               </h2>
             )}
             {step === "done" && (
               <h2 className="text-[22px] font-black tracking-[-0.3px]">
-                Hoş geldin! 🎉
+                Hos geldin!
               </h2>
             )}
             {step !== "method" && step !== "done" && (
               <button
                 onClick={handleBack}
-                className="mt-1 bg-transparent p-0 font-body text-[12px] font-bold text-muted"
+                className="mt-1 flex items-center gap-1 bg-transparent p-0 font-body text-[12px] font-bold text-muted"
               >
-                ← Geri
+                <ArrowLeft size={12} />
+                Geri
               </button>
             )}
           </div>
           <button
             onClick={onClose}
-            className="bg-transparent text-[22px] leading-none text-faint transition-colors hover:text-foreground"
+            className="bg-transparent text-muted transition-colors hover:text-foreground"
           >
-            ×
+            <X size={20} />
           </button>
         </div>
 
@@ -109,7 +124,7 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
           {step === "method" && (
             <div>
               <p className="mb-5 font-body text-sm leading-[1.5] text-muted">
-                Saniyeler içinde başla. Şifre gerekmez.
+                Saniyeler icinde basla. Sifre gerekmez.
               </p>
               <button
                 onClick={() => handleOAuth("google")}
@@ -160,15 +175,16 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
                 onClick={handleContinueEmail}
                 className="flex w-full items-center justify-center gap-[10px] rounded-[10px] border-[1.5px] border-border bg-surface px-4 py-[13px] font-heading text-sm font-bold transition-all hover:border-faint hover:shadow-[0_2px_8px_rgba(0,0,0,0.06)]"
               >
-                ✉️ &nbsp; E-posta ile devam et
+                <Mail size={18} />
+                E-posta ile devam et
               </button>
 
               <p className="mt-4 text-center font-body text-[12px] leading-[1.5] text-faint">
-                Kayıt olarak{" "}
+                Kayit olarak{" "}
                 <span className="cursor-pointer text-accent">
-                  Kullanım Şartları
+                  Kullanim Sartlari
                 </span>
-                &apos;nı kabul etmiş olursunuz.
+                &apos;ni kabul etmis olursunuz.
               </p>
             </div>
           )}
@@ -177,25 +193,25 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
           {step === "role" && (
             <div>
               <p className="mb-[18px] font-body text-sm text-muted">
-                Deneyimini kişiselleştirelim.
+                Deneyimini kisisellestirelim.
               </p>
               <div className="mb-[10px] grid grid-cols-2 gap-[10px]">
                 {(
                   [
                     {
                       r: "athlete" as AppRole,
-                      icon: "🥊",
+                      Icon: Swords,
                       title: "Sporcuyum",
-                      desc: "Profil oluştur, keşfedil, sparring bul",
+                      desc: "Profil olustur, kesfedil, sparring bul",
                     },
                     {
                       r: "fan" as AppRole,
-                      icon: "👁️",
-                      title: "Fanım",
-                      desc: "Dövüşçüleri keşfet ve takip et",
+                      Icon: Eye,
+                      title: "Fanim",
+                      desc: "Dovusculeri kesfet ve takip et",
                     },
                   ] as const
-                ).map(({ r, icon, title, desc }) => (
+                ).map(({ r, Icon, title, desc }) => (
                   <div
                     key={r}
                     className={`cursor-pointer rounded-[10px] border-[1.5px] p-4 text-center transition-all hover:border-accent ${
@@ -205,7 +221,9 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
                     }`}
                     onClick={() => setAuthRole(r)}
                   >
-                    <div className="mb-[6px] text-[22px]">{icon}</div>
+                    <div className="mb-[6px] flex justify-center text-accent">
+                      <Icon size={22} />
+                    </div>
                     <div className="text-sm font-extrabold tracking-[0.3px]">
                       {title}
                     </div>
@@ -225,20 +243,22 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
                 }`}
                 onClick={() => setAuthRole("coach")}
               >
-                <div className="text-2xl">🏋️</div>
+                <div className="text-accent">
+                  <Dumbbell size={24} />
+                </div>
                 <div>
                   <div className="text-sm font-extrabold tracking-[0.3px]">
-                    Antrenör / Gym
+                    Antrenor / Gym
                   </div>
                   <div className="font-body text-[12px] leading-[1.4] text-muted">
-                    Salonunu tanıt, sporcuları bul, PT&apos;lerle iş birliği
+                    Salonunu tanit, sporculari bul, PT&apos;lerle is birligi
                     yap
                   </div>
                 </div>
               </div>
 
               <button
-                className="mt-[14px] w-full rounded-[9px] bg-accent px-4 py-[13px] font-heading text-sm font-extrabold tracking-[0.5px] text-white transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:bg-faint"
+                className="mt-[14px] flex w-full items-center justify-center gap-2 rounded-[9px] bg-accent px-4 py-[13px] font-heading text-sm font-extrabold tracking-[0.5px] text-white transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:bg-faint"
                 disabled={!authRole}
                 onClick={() =>
                   authRole === "coach"
@@ -246,7 +266,8 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
                     : setStep("done")
                 }
               >
-                Devam Et →
+                Devam Et
+                <ChevronRight size={16} />
               </button>
             </div>
           )}
@@ -255,25 +276,25 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
           {step === "coachtype" && (
             <div>
               <p className="mb-[18px] font-body text-sm text-muted">
-                Bu seçim bazı özellikleri açar/kapatır.
+                Bu secim bazi ozellikleri acar/kapatir.
               </p>
               <div className="flex flex-col gap-[10px]">
                 {(
                   [
                     {
                       t: "gym" as CoachType,
-                      icon: "🏢",
+                      Icon: Building2,
                       title: "Salon / Gym Sahibi",
-                      desc: "Salonunu tanıt. Sporcuları keşfet. PT'lere iş teklifi ver.",
+                      desc: "Salonunu tanit. Sporculari kesfet. PT'lere is teklifi ver.",
                     },
                     {
                       t: "pt" as CoachType,
-                      icon: "👤",
+                      Icon: User,
                       title: "Personal Trainer",
-                      desc: "PT hizmetini tanıt. Sporculara ulaş.",
+                      desc: "PT hizmetini tanit. Sporculara ulas.",
                     },
                   ] as const
-                ).map(({ t, icon, title, desc }) => (
+                ).map(({ t, Icon, title, desc }) => (
                   <div
                     key={t}
                     className={`flex cursor-pointer items-center gap-[14px] rounded-[10px] border-[1.5px] p-[14px_16px] text-left transition-all hover:border-accent ${
@@ -283,7 +304,9 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
                     }`}
                     onClick={() => setAuthCoachType(t)}
                   >
-                    <div className="text-2xl">{icon}</div>
+                    <div className="text-accent">
+                      <Icon size={24} />
+                    </div>
                     <div>
                       <div className="text-sm font-extrabold tracking-[0.3px]">
                         {title}
@@ -296,11 +319,12 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
                 ))}
               </div>
               <button
-                className="mt-[14px] w-full rounded-[9px] bg-accent px-4 py-[13px] font-heading text-sm font-extrabold tracking-[0.5px] text-white transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:bg-faint"
+                className="mt-[14px] flex w-full items-center justify-center gap-2 rounded-[9px] bg-accent px-4 py-[13px] font-heading text-sm font-extrabold tracking-[0.5px] text-white transition-colors hover:bg-accent-dark disabled:cursor-not-allowed disabled:bg-faint"
                 disabled={!authCoachType}
                 onClick={() => setStep("done")}
               >
-                Devam Et →
+                Devam Et
+                <ChevronRight size={16} />
               </button>
             </div>
           )}
@@ -308,54 +332,58 @@ export default function AuthModal({ onClose, onComplete }: AuthModalProps) {
           {/* STEP 4 — Done */}
           {step === "done" && (
             <div className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent-border bg-accent-light text-[28px]">
-                🎉
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border-2 border-accent-border bg-accent-light text-accent">
+                <PartyPopper size={28} />
               </div>
-              <h3 className="mb-2 text-[20px] font-black">Her şey hazır!</h3>
+              <h3 className="mb-2 text-[20px] font-black">Her sey hazir!</h3>
               <p className="mb-6 font-body text-sm leading-[1.6] text-muted">
                 {authRole === "athlete" &&
-                  "Profilini oluştur, highlightlarını yükle ve keşfedilmeye başla."}
+                  "Profilini olustur, highlightlarini yukle ve kesfedilmeye basla."}
                 {authRole === "fan" &&
-                  "Sporcuları keşfetmeye ve takip etmeye hazırsın."}
+                  "Sporculari kesfetmeye ve takip etmeye hazirsin."}
                 {authRole === "coach" &&
                   authCoachType === "gym" &&
-                  "Salonunu tanıt, sporcuları keşfet ve PT'lerle iş birliği yap."}
+                  "Salonunu tanit, sporculari kesfet ve PT'lerle is birligi yap."}
                 {authRole === "coach" &&
                   authCoachType === "pt" &&
-                  "PT profilini oluştur ve sporcularla bağlan."}
+                  "PT profilini olustur ve sporcularla baglan."}
               </p>
 
               <div className="mb-5 flex items-center gap-3 rounded-[10px] border border-border bg-surface p-[14px_16px]">
-                <span className="text-[20px]">
-                  {authRole === "athlete"
-                    ? "🥊"
-                    : authRole === "fan"
-                      ? "👁️"
-                      : authCoachType === "gym"
-                        ? "🏢"
-                        : "👤"}
+                <span className="text-accent">
+                  {authRole === "athlete" ? (
+                    <Swords size={20} />
+                  ) : authRole === "fan" ? (
+                    <Eye size={20} />
+                  ) : authCoachType === "gym" ? (
+                    <Building2 size={20} />
+                  ) : (
+                    <User size={20} />
+                  )}
                 </span>
                 <div className="text-left">
                   <div className="text-sm font-extrabold">
                     {authRole === "athlete"
-                      ? "Sporcu Hesabı"
+                      ? "Sporcu Hesabi"
                       : authRole === "fan"
-                        ? "Fan Hesabı"
+                        ? "Fan Hesabi"
                         : authCoachType === "gym"
-                          ? "Salon Hesabı"
-                          : "PT Hesabı"}
+                          ? "Salon Hesabi"
+                          : "PT Hesabi"}
                   </div>
-                  <div className="font-body text-[12px] text-muted">
-                    Hesap tipini ayarladık ✓
+                  <div className="flex items-center gap-1 font-body text-[12px] text-muted">
+                    <Check size={12} className="text-[#16a34a]" />
+                    Hesap tipini ayarladik
                   </div>
                 </div>
               </div>
 
               <button
-                className="w-full rounded-[9px] bg-accent px-4 py-[13px] font-heading text-sm font-extrabold tracking-[0.5px] text-white transition-colors hover:bg-accent-dark"
+                className="flex w-full items-center justify-center gap-2 rounded-[9px] bg-accent px-4 py-[13px] font-heading text-sm font-extrabold tracking-[0.5px] text-white transition-colors hover:bg-accent-dark"
                 onClick={() => onComplete(authRole!, authCoachType)}
               >
-                Platforma Gir →
+                Platforma Gir
+                <ChevronRight size={16} />
               </button>
             </div>
           )}

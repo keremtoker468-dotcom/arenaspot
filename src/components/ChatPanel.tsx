@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import type { Message } from "@/lib/types/database";
+import { X, Briefcase, MessageCircle, Send, User as UserIcon } from "lucide-react";
 
 interface ChatPanelProps {
   chat: {
@@ -34,7 +35,6 @@ export default function ChatPanel({ chat, onClose, user }: ChatPanelProps) {
   useEffect(() => {
     if (!conversationId) return;
 
-    // Fetch existing messages
     supabase
       .from("messages")
       .select("*")
@@ -45,7 +45,6 @@ export default function ChatPanel({ chat, onClose, user }: ChatPanelProps) {
         scrollToBottom();
       });
 
-    // Subscribe to realtime
     const channel = supabase
       .channel(`messages:${conversationId}`)
       .on(
@@ -72,7 +71,6 @@ export default function ChatPanel({ chat, onClose, user }: ChatPanelProps) {
   const findOrCreateConversation = async () => {
     if (!user) return;
 
-    // Try to find existing conversation
     const { data: existing } = await supabase
       .from("conversations")
       .select("id")
@@ -86,9 +84,7 @@ export default function ChatPanel({ chat, onClose, user }: ChatPanelProps) {
       return;
     }
 
-    // Create new conversation
-    const convType =
-      chat.type === "pt" ? "job_offer" : "general";
+    const convType = chat.type === "pt" ? "job_offer" : "general";
     const { data: newConv } = await supabase
       .from("conversations")
       .insert({
@@ -130,7 +126,7 @@ export default function ChatPanel({ chat, onClose, user }: ChatPanelProps) {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-[200] w-[360px] overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_8px_40px_rgba(0,0,0,0.12)]">
+    <div className="fixed bottom-4 right-4 z-[200] w-[calc(100vw-32px)] overflow-hidden rounded-[14px] border border-border bg-white shadow-[0_8px_40px_rgba(0,0,0,0.12)] sm:bottom-6 sm:right-6 sm:w-[360px]">
       {/* Header */}
       <div className="flex items-center justify-between bg-foreground p-[14px_18px]">
         <div className="flex items-center gap-[10px]">
@@ -139,25 +135,36 @@ export default function ChatPanel({ chat, onClose, user }: ChatPanelProps) {
           </div>
           <div>
             <div className="text-sm font-extrabold text-white">{chat.name}</div>
-            <div className="font-body text-[11px] text-[#888]">
-              {chat.type === "pt"
-                ? `👤 PT · ${chat.city || ""}`
-                : `${chat.style || ""} · ${chat.city || ""}`}
+            <div className="flex items-center gap-1 font-body text-[11px] text-[#888]">
+              {chat.type === "pt" ? (
+                <>
+                  <UserIcon size={10} />
+                  PT
+                  {chat.city ? ` · ${chat.city}` : ""}
+                </>
+              ) : (
+                <>
+                  {chat.style || ""}
+                  {chat.style && chat.city ? " · " : ""}
+                  {chat.city || ""}
+                </>
+              )}
             </div>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="bg-transparent text-[20px] leading-none text-[#888] transition-colors hover:text-white"
+          className="bg-transparent text-[#888] transition-colors hover:text-white"
         >
-          ×
+          <X size={18} />
         </button>
       </div>
 
       {/* PT banner */}
       {chat.type === "pt" && (
-        <div className="border-b border-accent-border bg-accent-light p-[8px_14px] font-body text-[11px] font-bold text-accent">
-          💼 İş birliği teklifi gönderiyorsunuz
+        <div className="flex items-center gap-[6px] border-b border-accent-border bg-accent-light p-[8px_14px] font-body text-[11px] font-bold text-accent">
+          <Briefcase size={12} />
+          Is birligi teklifi gonderiyorsunuz
         </div>
       )}
 
@@ -190,13 +197,17 @@ export default function ChatPanel({ chat, onClose, user }: ChatPanelProps) {
           })
         ) : (
           <div className="pt-10 text-center">
-            <div className="mb-2 text-[28px]">
-              {chat.type === "pt" ? "💼" : "💬"}
+            <div className="mb-2 flex justify-center text-muted">
+              {chat.type === "pt" ? (
+                <Briefcase size={28} />
+              ) : (
+                <MessageCircle size={28} />
+              )}
             </div>
             <p className="font-body text-[13px] text-faint">
               {chat.type === "pt"
-                ? "İş teklifini gönder!"
-                : "Konuşmayı sen başlat!"}
+                ? "Is teklifini gonder!"
+                : "Konusmayi sen baslat!"}
             </p>
           </div>
         )}
@@ -207,7 +218,7 @@ export default function ChatPanel({ chat, onClose, user }: ChatPanelProps) {
         <input
           className="flex-1 rounded-[7px] border border-border px-3 py-2 font-body text-[13px] outline-none transition-colors focus:border-accent"
           placeholder={
-            chat.type === "pt" ? "İş teklifi yaz..." : "Mesaj yaz..."
+            chat.type === "pt" ? "Is teklifi yaz..." : "Mesaj yaz..."
           }
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -215,11 +226,9 @@ export default function ChatPanel({ chat, onClose, user }: ChatPanelProps) {
         />
         <button
           onClick={sendMsg}
-          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[7px] bg-accent text-white"
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[7px] bg-accent text-white transition-colors hover:bg-accent-dark"
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="white">
-            <path d="M1 1l12 6-12 6V8.5l8-1.5-8-1.5V1z" />
-          </svg>
+          <Send size={14} />
         </button>
       </div>
     </div>
