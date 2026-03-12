@@ -51,6 +51,10 @@ export default function AuthPage() {
             });
 
           if (profileError) throw profileError;
+
+          // New user — redirect to onboarding
+          router.push("/onboarding");
+          return;
         }
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({
