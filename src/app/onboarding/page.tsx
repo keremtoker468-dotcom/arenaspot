@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { UserRole } from "@/lib/types/database";
@@ -43,8 +43,10 @@ export default function OnboardingPage() {
   const [role, setRole] = useState<OnboardingRole>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [hasProfile, setHasProfile] = useState<boolean | null>(null);
 
-  // Basic fields (all roles)
+  // Basic fields
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -65,7 +67,36 @@ export default function OnboardingPage() {
   const [workplace, setWorkplace] = useState("");
   const [specializations, setSpecializations] = useState<string[]>([]);
 
-  const steps: Step[] = role === "fan" ? ["role", "basics", "done"] : ["role", "basics", "details", "done"];
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) {
+        router.push("/auth");
+        return;
+      }
+      setUserId(user.id);
+
+      supabase
+        .from("profiles")
+        .select("id, username, full_name, role")
+        .eq("id", user.id)
+        .single()
+        .then(({ data: profile }) => {
+          if (profile) {
+            setHasProfile(true);
+            if (profile.username) setUsername(profile.username);
+            if (profile.full_name) setFullName(profile.full_name);
+          } else {
+            setHasProfile(false);
+          }
+        });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const steps: Step[] =
+    role === "fan"
+      ? ["role", "basics", "done"]
+      : ["role", "basics", "details", "done"];
   const currentIdx = steps.indexOf(step);
   const totalSteps = steps.length;
 
@@ -76,16 +107,11 @@ export default function OnboardingPage() {
   };
 
   const handleSave = async () => {
-    if (!role) return;
+    if (!role || !userId) return;
     setSaving(true);
     setError(null);
 
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Oturum bulunamadi");
-
       const updateData: Record<string, unknown> = {
         full_name: fullName.trim(),
         username: username.toLowerCase().trim(),
@@ -112,18 +138,17 @@ export default function OnboardingPage() {
         updateData.fight_style = specializations.join(", ") || null;
       }
 
-      // Try update first (for OAuth users who already have a row)
-      const { error: updateError } = await supabase
-        .from("profiles")
-        .update(updateData)
-        .eq("id", user.id);
-
-      if (updateError) {
-        // If update fails, try insert
+      if (hasProfile) {
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update(updateData)
+          .eq("id", userId);
+        if (updateError) throw updateError;
+      } else {
         const { error: insertError } = await supabase
           .from("profiles")
           .insert({
-            id: user.id,
+            id: userId,
             username: username.toLowerCase().trim(),
             full_name: fullName.trim(),
             role,
@@ -143,7 +168,6 @@ export default function OnboardingPage() {
               fight_style: specializations.join(", ") || null,
             }),
           });
-
         if (insertError) throw insertError;
       }
 
@@ -155,7 +179,16 @@ export default function OnboardingPage() {
     }
   };
 
-  const canProceedFromBasics = fullName.trim().length >= 2 && username.trim().length >= 3;
+  const canProceedFromBasics =
+    fullName.trim().length >= 2 && username.trim().length >= 3;
+
+  if (userId === null) {
+    return (
+      <div className="flex min-h-[calc(100vh-60px)] items-center justify-center">
+        <div className="text-sm text-muted">Yukleniyor...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[calc(100vh-60px)] items-center justify-center px-4 py-10">
@@ -171,7 +204,9 @@ export default function OnboardingPage() {
             <div className="h-[3px] rounded-full bg-border">
               <div
                 className="h-full rounded-full bg-accent transition-all duration-500"
-                style={{ width: `${((currentIdx + 1) / (totalSteps - 1)) * 100}%` }}
+                style={{
+                  width: `${((currentIdx + 1) / (totalSteps - 1)) * 100}%`,
+                }}
               />
             </div>
           </div>
@@ -188,93 +223,32 @@ export default function OnboardingPage() {
             </p>
 
             <div className="grid grid-cols-2 gap-3">
-              {/* Athlete */}
-              <button
-                onClick={() => setRole("athlete")}
-                className={`group relative overflow-hidden rounded-[12px] border-[1.5px] p-6 text-left transition-all hover:border-accent hover:shadow-[0_4px_20px_rgba(230,57,70,0.1)] ${
-                  role === "athlete"
-                    ? "border-accent bg-accent-light"
-                    : "border-border bg-white"
-                }`}
-              >
-                <div className="absolute left-0 right-0 top-0 h-[3px] origin-left scale-x-0 bg-accent transition-transform group-hover:scale-x-100" />
-                <Swords size={24} className="mb-3 text-accent" />
-                <div className="mb-1 text-[16px] font-black">Sporcu</div>
-                <p className="font-body text-[12px] leading-[1.4] text-muted">
-                  Profil olustur, highlight yukle, sparring bul
-                </p>
-                {role === "athlete" && (
-                  <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white">
-                    <Check size={12} />
-                  </div>
-                )}
-              </button>
-
-              {/* Fan */}
-              <button
-                onClick={() => setRole("fan")}
-                className={`group relative overflow-hidden rounded-[12px] border-[1.5px] p-6 text-left transition-all hover:border-accent hover:shadow-[0_4px_20px_rgba(230,57,70,0.1)] ${
-                  role === "fan"
-                    ? "border-accent bg-accent-light"
-                    : "border-border bg-white"
-                }`}
-              >
-                <div className="absolute left-0 right-0 top-0 h-[3px] origin-left scale-x-0 bg-accent transition-transform group-hover:scale-x-100" />
-                <Eye size={24} className="mb-3 text-accent" />
-                <div className="mb-1 text-[16px] font-black">Fan</div>
-                <p className="font-body text-[12px] leading-[1.4] text-muted">
-                  Sporculari kesfet ve takip et
-                </p>
-                {role === "fan" && (
-                  <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white">
-                    <Check size={12} />
-                  </div>
-                )}
-              </button>
-
-              {/* Gym */}
-              <button
-                onClick={() => setRole("gym")}
-                className={`group relative overflow-hidden rounded-[12px] border-[1.5px] p-6 text-left transition-all hover:border-accent hover:shadow-[0_4px_20px_rgba(230,57,70,0.1)] ${
-                  role === "gym"
-                    ? "border-accent bg-accent-light"
-                    : "border-border bg-white"
-                }`}
-              >
-                <div className="absolute left-0 right-0 top-0 h-[3px] origin-left scale-x-0 bg-accent transition-transform group-hover:scale-x-100" />
-                <Building2 size={24} className="mb-3 text-accent" />
-                <div className="mb-1 text-[16px] font-black">Salon / Gym</div>
-                <p className="font-body text-[12px] leading-[1.4] text-muted">
-                  Salonunu tanit, sporcu ve PT bul
-                </p>
-                {role === "gym" && (
-                  <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white">
-                    <Check size={12} />
-                  </div>
-                )}
-              </button>
-
-              {/* PT */}
-              <button
-                onClick={() => setRole("pt")}
-                className={`group relative overflow-hidden rounded-[12px] border-[1.5px] p-6 text-left transition-all hover:border-accent hover:shadow-[0_4px_20px_rgba(230,57,70,0.1)] ${
-                  role === "pt"
-                    ? "border-accent bg-accent-light"
-                    : "border-border bg-white"
-                }`}
-              >
-                <div className="absolute left-0 right-0 top-0 h-[3px] origin-left scale-x-0 bg-accent transition-transform group-hover:scale-x-100" />
-                <Dumbbell size={24} className="mb-3 text-accent" />
-                <div className="mb-1 text-[16px] font-black">Personal Trainer</div>
-                <p className="font-body text-[12px] leading-[1.4] text-muted">
-                  PT hizmetini tanit, sporcularla baglan
-                </p>
-                {role === "pt" && (
-                  <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white">
-                    <Check size={12} />
-                  </div>
-                )}
-              </button>
+              {(
+                [
+                  { r: "athlete" as UserRole, Icon: Swords, title: "Sporcu", desc: "Profil olustur, highlight yukle, sparring bul" },
+                  { r: "fan" as UserRole, Icon: Eye, title: "Fan", desc: "Sporculari kesfet ve takip et" },
+                  { r: "gym" as UserRole, Icon: Building2, title: "Salon / Gym", desc: "Salonunu tanit, sporcu ve PT bul" },
+                  { r: "pt" as UserRole, Icon: Dumbbell, title: "Personal Trainer", desc: "PT hizmetini tanit, sporcularla baglan" },
+                ] as const
+              ).map(({ r, Icon, title, desc }) => (
+                <button
+                  key={r}
+                  onClick={() => setRole(r)}
+                  className={`group relative overflow-hidden rounded-[12px] border-[1.5px] p-6 text-left transition-all hover:border-accent hover:shadow-[0_4px_20px_rgba(230,57,70,0.1)] ${
+                    role === r ? "border-accent bg-accent-light" : "border-border bg-white"
+                  }`}
+                >
+                  <div className="absolute left-0 right-0 top-0 h-[3px] origin-left scale-x-0 bg-accent transition-transform group-hover:scale-x-100" />
+                  <Icon size={24} className="mb-3 text-accent" />
+                  <div className="mb-1 text-[16px] font-black">{title}</div>
+                  <p className="font-body text-[12px] leading-[1.4] text-muted">{desc}</p>
+                  {role === r && (
+                    <div className="absolute right-3 top-3 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-white">
+                      <Check size={12} />
+                    </div>
+                  )}
+                </button>
+              ))}
             </div>
 
             <button
@@ -303,17 +277,10 @@ export default function OnboardingPage() {
               Temel Bilgiler
             </h2>
             <p className="mb-6 font-body text-[15px] text-muted">
-              {role === "athlete"
-                ? "Sporcu profilinin temelini olustur."
-                : role === "gym"
-                  ? "Salonunun temel bilgilerini gir."
-                  : role === "pt"
-                    ? "PT profilinin temelini olustur."
-                    : "Profilini olustur ve sporculari kesfetmeye basla."}
+              Profilinin temelini olustur.
             </p>
 
             <div className="space-y-4">
-              {/* Full Name */}
               <div>
                 <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                   <User size={14} className="text-faint" />
@@ -327,57 +294,36 @@ export default function OnboardingPage() {
                 />
               </div>
 
-              {/* Username */}
               <div>
                 <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                   <Target size={14} className="text-faint" />
                   Kullanici Adi
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-body text-sm text-faint">
-                    @
-                  </span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 font-body text-sm text-faint">@</span>
                   <input
                     value={username}
-                    onChange={(e) =>
-                      setUsername(
-                        e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "")
-                      )
-                    }
+                    onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
                     placeholder="kaandemir"
                     className="w-full rounded-[8px] border border-border py-[11px] pl-8 pr-4 font-body text-sm outline-none transition-colors focus:border-accent"
                   />
                 </div>
               </div>
 
-              {/* Bio */}
               <div>
                 <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                   <FileText size={14} className="text-faint" />
-                  {role === "gym"
-                    ? "Salon Hakkinda"
-                    : role === "pt"
-                      ? "Kendin Hakkinda"
-                      : "Hakkinda"}
+                  Hakkinda
                 </label>
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={3}
-                  placeholder={
-                    role === "athlete"
-                      ? "Dovus tecrubeni ve hedeflerini kisa anlat..."
-                      : role === "gym"
-                        ? "Salonunuzun ozellikleri, egitim programlari..."
-                        : role === "pt"
-                          ? "Uzmanlik alanin ve tecrubeni anlat..."
-                          : "Kendinden kisa bahset..."
-                  }
+                  placeholder="Kendinden kisa bahset..."
                   className="w-full resize-none rounded-[8px] border border-border px-4 py-[11px] font-body text-sm outline-none transition-colors focus:border-accent"
                 />
               </div>
 
-              {/* City */}
               <div>
                 <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                   <MapPin size={14} className="text-faint" />
@@ -401,7 +347,6 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
-              {/* Gym name (gym only in basics) */}
               {role === "gym" && (
                 <div>
                   <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
@@ -425,7 +370,7 @@ export default function OnboardingPage() {
             )}
 
             <button
-              disabled={!canProceedFromBasics}
+              disabled={!canProceedFromBasics || saving}
               onClick={() => {
                 if (role === "fan") {
                   handleSave();
@@ -441,7 +386,7 @@ export default function OnboardingPage() {
           </div>
         )}
 
-        {/* STEP: Details (athlete / gym / pt specific) */}
+        {/* STEP: Details */}
         {step === "details" && (
           <div className="animate-fade-up">
             <button
@@ -452,18 +397,11 @@ export default function OnboardingPage() {
               Geri
             </button>
 
-            {/* ATHLETE DETAILS */}
             {role === "athlete" && (
               <>
-                <h2 className="mb-1 text-[28px] font-black tracking-[-0.5px]">
-                  Sporcu Detaylari
-                </h2>
-                <p className="mb-6 font-body text-[15px] text-muted">
-                  Dovus stilin, kilo sinifin ve rekorun.
-                </p>
-
+                <h2 className="mb-1 text-[28px] font-black tracking-[-0.5px]">Sporcu Detaylari</h2>
+                <p className="mb-6 font-body text-[15px] text-muted">Dovus stilin, kilo sinifin ve rekorun.</p>
                 <div className="space-y-4">
-                  {/* Fight Style */}
                   <div>
                     <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                       <Swords size={14} className="text-faint" />
@@ -471,23 +409,14 @@ export default function OnboardingPage() {
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {FIGHT_STYLES.map((s) => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => setFightStyle(fightStyle === s ? "" : s)}
+                        <button key={s} type="button" onClick={() => setFightStyle(fightStyle === s ? "" : s)}
                           className={`rounded-[6px] border px-4 py-[9px] font-heading text-[13px] font-bold transition-all ${
-                            fightStyle === s
-                              ? "border-accent bg-accent text-white"
-                              : "border-border text-muted hover:border-faint hover:bg-surface"
+                            fightStyle === s ? "border-accent bg-accent text-white" : "border-border text-muted hover:border-faint hover:bg-surface"
                           }`}
-                        >
-                          {s}
-                        </button>
+                        >{s}</button>
                       ))}
                     </div>
                   </div>
-
-                  {/* Weight Class */}
                   <div>
                     <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                       <Scale size={14} className="text-faint" />
@@ -495,40 +424,23 @@ export default function OnboardingPage() {
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {WEIGHT_CLASSES.map((w) => (
-                        <button
-                          key={w}
-                          type="button"
-                          onClick={() => setWeightClass(weightClass === w ? "" : w)}
+                        <button key={w} type="button" onClick={() => setWeightClass(weightClass === w ? "" : w)}
                           className={`rounded-[6px] border px-3 py-[7px] font-heading text-[13px] font-semibold transition-all ${
-                            weightClass === w
-                              ? "border-accent bg-accent-light text-accent"
-                              : "border-border text-muted hover:border-faint hover:bg-surface"
+                            weightClass === w ? "border-accent bg-accent-light text-accent" : "border-border text-muted hover:border-faint hover:bg-surface"
                           }`}
-                        >
-                          {w}
-                        </button>
+                        >{w}</button>
                       ))}
                     </div>
                   </div>
-
-                  {/* Age */}
                   <div>
                     <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                       <User size={14} className="text-faint" />
                       Yas
                     </label>
-                    <input
-                      type="number"
-                      value={age}
-                      onChange={(e) => setAge(e.target.value)}
-                      min={16}
-                      max={60}
-                      placeholder="25"
+                    <input type="number" value={age} onChange={(e) => setAge(e.target.value)} min={16} max={60} placeholder="25"
                       className="w-full max-w-[120px] rounded-[8px] border border-border px-4 py-[11px] font-body text-sm outline-none transition-colors focus:border-accent"
                     />
                   </div>
-
-                  {/* Fight Record */}
                   <div>
                     <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                       <Trophy size={14} className="text-faint" />
@@ -536,38 +448,20 @@ export default function OnboardingPage() {
                     </label>
                     <div className="grid grid-cols-3 gap-3">
                       <div className="overflow-hidden rounded-[10px] border border-[#bbf7d0] bg-[#f0fdf4] p-3 text-center">
-                        <label className="text-[10px] font-bold tracking-[1px] text-[#16a34a]">
-                          GALIBIYET
-                        </label>
-                        <input
-                          type="number"
-                          value={recordW}
-                          onChange={(e) => setRecordW(e.target.value)}
-                          min={0}
+                        <label className="text-[10px] font-bold tracking-[1px] text-[#16a34a]">GALIBIYET</label>
+                        <input type="number" value={recordW} onChange={(e) => setRecordW(e.target.value)} min={0}
                           className="mt-1 w-full bg-transparent text-center text-[28px] font-black leading-none text-[#16a34a] outline-none"
                         />
                       </div>
                       <div className="overflow-hidden rounded-[10px] border border-accent-border bg-accent-light p-3 text-center">
-                        <label className="text-[10px] font-bold tracking-[1px] text-accent">
-                          MAGLUBIYET
-                        </label>
-                        <input
-                          type="number"
-                          value={recordL}
-                          onChange={(e) => setRecordL(e.target.value)}
-                          min={0}
+                        <label className="text-[10px] font-bold tracking-[1px] text-accent">MAGLUBIYET</label>
+                        <input type="number" value={recordL} onChange={(e) => setRecordL(e.target.value)} min={0}
                           className="mt-1 w-full bg-transparent text-center text-[28px] font-black leading-none text-accent outline-none"
                         />
                       </div>
                       <div className="overflow-hidden rounded-[10px] border border-border bg-surface p-3 text-center">
-                        <label className="text-[10px] font-bold tracking-[1px] text-faint">
-                          BERABERLIK
-                        </label>
-                        <input
-                          type="number"
-                          value={recordD}
-                          onChange={(e) => setRecordD(e.target.value)}
-                          min={0}
+                        <label className="text-[10px] font-bold tracking-[1px] text-faint">BERABERLIK</label>
+                        <input type="number" value={recordD} onChange={(e) => setRecordD(e.target.value)} min={0}
                           className="mt-1 w-full bg-transparent text-center text-[28px] font-black leading-none text-faint outline-none"
                         />
                       </div>
@@ -577,36 +471,22 @@ export default function OnboardingPage() {
               </>
             )}
 
-            {/* GYM DETAILS */}
             {role === "gym" && (
               <>
-                <h2 className="mb-1 text-[28px] font-black tracking-[-0.5px]">
-                  Salon Detaylari
-                </h2>
-                <p className="mb-6 font-body text-[15px] text-muted">
-                  Salonunuzun sundugu dovus stilleri ve olanaklar.
-                </p>
-
+                <h2 className="mb-1 text-[28px] font-black tracking-[-0.5px]">Salon Detaylari</h2>
+                <p className="mb-6 font-body text-[15px] text-muted">Salonunuzun sundugu dovus stilleri.</p>
                 <div className="space-y-4">
-                  {/* Fight Styles offered */}
                   <div>
                     <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                       <Swords size={14} className="text-faint" />
                       Sunulan Dovus Stilleri
                     </label>
-                    <p className="mb-2 font-body text-[12px] text-faint">
-                      Birden fazla secebilirsiniz
-                    </p>
+                    <p className="mb-2 font-body text-[12px] text-faint">Birden fazla secebilirsiniz</p>
                     <div className="flex flex-wrap gap-2">
                       {FIGHT_STYLES.map((s) => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => toggleSpecialization(s)}
+                        <button key={s} type="button" onClick={() => toggleSpecialization(s)}
                           className={`rounded-[6px] border px-4 py-[9px] font-heading text-[13px] font-bold transition-all ${
-                            specializations.includes(s)
-                              ? "border-accent bg-accent text-white"
-                              : "border-border text-muted hover:border-faint hover:bg-surface"
+                            specializations.includes(s) ? "border-accent bg-accent text-white" : "border-border text-muted hover:border-faint hover:bg-surface"
                           }`}
                         >
                           {specializations.includes(s) && <Check size={12} className="mr-1 inline" />}
@@ -615,15 +495,11 @@ export default function OnboardingPage() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Salon capacity / extra info placeholder */}
                   <div className="rounded-[10px] border border-border bg-surface p-5">
                     <div className="flex items-start gap-3">
                       <Camera size={18} className="mt-[2px] text-faint" />
                       <div>
-                        <div className="text-sm font-bold text-foreground">
-                          Salon Fotograflari
-                        </div>
+                        <div className="text-sm font-bold text-foreground">Salon Fotograflari</div>
                         <p className="mt-1 font-body text-[12px] leading-[1.5] text-muted">
                           Profilinizi olusturduktan sonra Dashboard uzerinden salon fotograflari yukleyebilirsiniz.
                         </p>
@@ -634,50 +510,31 @@ export default function OnboardingPage() {
               </>
             )}
 
-            {/* PT DETAILS */}
             {role === "pt" && (
               <>
-                <h2 className="mb-1 text-[28px] font-black tracking-[-0.5px]">
-                  PT Detaylari
-                </h2>
-                <p className="mb-6 font-body text-[15px] text-muted">
-                  Uzmanlik alanlarin ve calisma bilgilerin.
-                </p>
-
+                <h2 className="mb-1 text-[28px] font-black tracking-[-0.5px]">PT Detaylari</h2>
+                <p className="mb-6 font-body text-[15px] text-muted">Uzmanlik alanlarin ve calisma bilgilerin.</p>
                 <div className="space-y-4">
-                  {/* Workplace */}
                   <div>
                     <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                       <Briefcase size={14} className="text-faint" />
                       Calistigi Yer
                     </label>
-                    <input
-                      value={workplace}
-                      onChange={(e) => setWorkplace(e.target.value)}
-                      placeholder="Power Gym Istanbul veya Freelance"
+                    <input value={workplace} onChange={(e) => setWorkplace(e.target.value)} placeholder="Power Gym Istanbul veya Freelance"
                       className="w-full rounded-[8px] border border-border px-4 py-[11px] font-body text-sm outline-none transition-colors focus:border-accent"
                     />
                   </div>
-
-                  {/* Specializations */}
                   <div>
                     <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                       <Swords size={14} className="text-faint" />
                       Uzmanlik Alanlari
                     </label>
-                    <p className="mb-2 font-body text-[12px] text-faint">
-                      Birden fazla secebilirsiniz
-                    </p>
+                    <p className="mb-2 font-body text-[12px] text-faint">Birden fazla secebilirsiniz</p>
                     <div className="flex flex-wrap gap-2">
                       {FIGHT_STYLES.map((s) => (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => toggleSpecialization(s)}
+                        <button key={s} type="button" onClick={() => toggleSpecialization(s)}
                           className={`rounded-[6px] border px-4 py-[9px] font-heading text-[13px] font-bold transition-all ${
-                            specializations.includes(s)
-                              ? "border-accent bg-accent text-white"
-                              : "border-border text-muted hover:border-faint hover:bg-surface"
+                            specializations.includes(s) ? "border-accent bg-accent text-white" : "border-border text-muted hover:border-faint hover:bg-surface"
                           }`}
                         >
                           {specializations.includes(s) && <Check size={12} className="mr-1 inline" />}
@@ -686,37 +543,14 @@ export default function OnboardingPage() {
                       ))}
                     </div>
                   </div>
-
-                  {/* Age */}
                   <div>
                     <label className="mb-[6px] flex items-center gap-[6px] font-body text-sm font-medium text-muted">
                       <User size={14} className="text-faint" />
                       Yas
                     </label>
-                    <input
-                      type="number"
-                      value={age}
-                      onChange={(e) => setAge(e.target.value)}
-                      min={18}
-                      max={70}
-                      placeholder="30"
+                    <input type="number" value={age} onChange={(e) => setAge(e.target.value)} min={18} max={70} placeholder="30"
                       className="w-full max-w-[120px] rounded-[8px] border border-border px-4 py-[11px] font-body text-sm outline-none transition-colors focus:border-accent"
                     />
-                  </div>
-
-                  {/* Experience info */}
-                  <div className="rounded-[10px] border border-border bg-surface p-5">
-                    <div className="flex items-start gap-3">
-                      <Trophy size={18} className="mt-[2px] text-faint" />
-                      <div>
-                        <div className="text-sm font-bold text-foreground">
-                          Sertifika ve Tecrube
-                        </div>
-                        <p className="mt-1 font-body text-[12px] leading-[1.5] text-muted">
-                          Profilinizi olusturduktan sonra bio alanindan sertifikalarinizi ve tecrubelerinizi detayli yazabilirsiniz.
-                        </p>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </>
@@ -746,112 +580,16 @@ export default function OnboardingPage() {
               <Check size={36} className="text-accent" />
             </div>
 
-            <h2 className="mb-2 text-[32px] font-black tracking-[-0.5px]">
-              Profil Hazir!
-            </h2>
+            <h2 className="mb-2 text-[32px] font-black tracking-[-0.5px]">Profil Hazir!</h2>
             <p className="mb-8 font-body text-[15px] leading-[1.6] text-muted">
               {role === "athlete"
-                ? "Sporcu profilin olusturuldu. Simdi sporculari kesfet, sparring partneri bul ve highlight videolarini yukle."
+                ? "Sporcu profilin olusturuldu. Simdi sporculari kesfet ve sparring partneri bul."
                 : role === "gym"
-                  ? "Salon profilin olusturuldu. Simdi yetenekli sporculari kesfet ve PT'lerle is birligi yap."
+                  ? "Salon profilin olusturuldu. Simdi sporculari kesfet."
                   : role === "pt"
-                    ? "PT profilin olusturuldu. Simdi sporculari kesfet ve onlara ulas."
-                    : "Profilin olusturuldu. Simdi sporculari kesfet ve takip et."}
+                    ? "PT profilin olusturuldu. Simdi sporculari kesfet."
+                    : "Profilin olusturuldu. Simdi sporculari kesfet."}
             </p>
-
-            {/* Profile summary card */}
-            <div className="mb-6 overflow-hidden rounded-[12px] border border-border bg-white text-left">
-              <div className="h-1 bg-accent" />
-              <div className="p-5">
-                <div className="mb-4 flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-[10px] border-[1.5px] border-accent-border bg-accent-light text-[16px] font-black text-accent">
-                    {fullName
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .substring(0, 2)
-                      .toUpperCase()}
-                  </div>
-                  <div>
-                    <div className="text-[17px] font-extrabold">{fullName}</div>
-                    <div className="font-body text-[12px] text-faint">
-                      @{username}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-[6px]">
-                  <span className="inline-flex items-center gap-1 rounded-[5px] border border-accent-border bg-accent-light px-[9px] py-[3px] text-[12px] font-bold text-accent">
-                    {role === "athlete" && <Swords size={11} />}
-                    {role === "fan" && <Eye size={11} />}
-                    {role === "gym" && <Building2 size={11} />}
-                    {role === "pt" && <Dumbbell size={11} />}
-                    {role === "athlete"
-                      ? "Sporcu"
-                      : role === "fan"
-                        ? "Fan"
-                        : role === "gym"
-                          ? "Salon"
-                          : "PT"}
-                  </span>
-                  {city && (
-                    <span className="inline-flex items-center gap-1 rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
-                      <MapPin size={10} />
-                      {city}
-                    </span>
-                  )}
-                  {role === "athlete" && fightStyle && (
-                    <span className="rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
-                      {fightStyle}
-                    </span>
-                  )}
-                  {role === "athlete" && weightClass && (
-                    <span className="rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
-                      {weightClass}
-                    </span>
-                  )}
-                  {role === "gym" && gymName && (
-                    <span className="rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
-                      {gymName}
-                    </span>
-                  )}
-                  {role === "pt" && workplace && (
-                    <span className="rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
-                      {workplace}
-                    </span>
-                  )}
-                </div>
-
-                {role === "athlete" && (
-                  <div className="mt-3 flex gap-[6px]">
-                    <div className="flex-1 rounded-[7px] bg-[#f0fdf4] p-[6px_4px] text-center">
-                      <div className="text-[18px] font-black leading-none text-[#16a34a]">
-                        {recordW}
-                      </div>
-                      <div className="mt-[2px] text-[9px] font-bold tracking-[1px] text-[#16a34a]">
-                        W
-                      </div>
-                    </div>
-                    <div className="flex-1 rounded-[7px] bg-accent-light p-[6px_4px] text-center">
-                      <div className="text-[18px] font-black leading-none text-accent">
-                        {recordL}
-                      </div>
-                      <div className="mt-[2px] text-[9px] font-bold tracking-[1px] text-accent">
-                        L
-                      </div>
-                    </div>
-                    <div className="flex-1 rounded-[7px] bg-surface p-[6px_4px] text-center">
-                      <div className="text-[18px] font-black leading-none text-faint">
-                        {recordD}
-                      </div>
-                      <div className="mt-[2px] text-[9px] font-bold tracking-[1px] text-faint">
-                        D
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
 
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
