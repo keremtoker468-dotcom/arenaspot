@@ -1,12 +1,16 @@
-export function Skeleton({ className = "" }: { className?: string }) {
+import { cn } from "@/lib/utils";
+
+function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
-      className={`animate-pulse rounded-[8px] bg-surface ${className}`}
+      data-slot="skeleton"
+      className={cn("bg-accent animate-pulse rounded-md", className)}
+      {...props}
     />
   );
 }
 
-export function CardSkeleton() {
+function CardSkeleton() {
   return (
     <div className="overflow-hidden rounded-[12px] border border-border bg-white p-5">
       <div className="mb-[14px] flex items-start gap-[11px]">
@@ -34,7 +38,7 @@ export function CardSkeleton() {
   );
 }
 
-export function ProfileSkeleton() {
+function ProfileSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-5 lg:grid-cols-[280px_1fr_220px]">
       <div className="flex flex-col gap-[14px]">
@@ -60,3 +64,5 @@ export function ProfileSkeleton() {
     </div>
   );
 }
+
+export { Skeleton, CardSkeleton, ProfileSkeleton };

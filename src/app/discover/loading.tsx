@@ -1,4 +1,4 @@
-import { CardSkeleton } from "@/components/ui/Skeleton";
+import { CardSkeleton } from "@/components/ui/skeleton";
 
 export default function DiscoverLoading() {
   return (

@@ -8,7 +8,7 @@ import AthleteCard from "@/components/AthleteCard";
 import FollowButton from "@/components/FollowButton";
 import CoachTypeSelect from "@/components/CoachTypeSelect";
 import { useApp } from "@/components/ChatProvider";
-import { CardSkeleton } from "@/components/ui/Skeleton";
+import { CardSkeleton } from "@/components/ui/skeleton";
 import {
   Search,
   Briefcase,
