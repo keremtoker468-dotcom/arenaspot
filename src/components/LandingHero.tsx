@@ -162,7 +162,6 @@ function RoleCard({
         animate={{
           y: isHovered ? -4 : 0,
           borderColor: isHovered ? "#e63946" : "#eaeaea",
-          scale: isExpanding ? 3 : 1,
           opacity: isExpanding ? 0 : 1,
         }}
         transition={{

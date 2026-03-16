@@ -37,7 +37,7 @@ export default function AthleteCard({
         borderColor: "#e63946",
         boxShadow: "0 8px 28px rgba(230, 57, 70, 0.10)",
       }}
-      whileTap={{ scale: 0.98 }}
+      whileTap={{ opacity: 0.9 }}
       transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
       style={{
         boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",

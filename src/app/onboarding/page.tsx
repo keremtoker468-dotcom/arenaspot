@@ -184,7 +184,7 @@ export default function OnboardingPage() {
 
         {/* STEP: Role Selection */}
         {step === "role" && (
-          <div className="animate-fade-up">
+          <div className="">
             <h1 className="mb-2 text-[32px] font-black tracking-[-0.5px]">
               Hos geldin!
             </h1>
@@ -234,7 +234,7 @@ export default function OnboardingPage() {
 
         {/* STEP: Basics */}
         {step === "basics" && (
-          <div className="animate-fade-up">
+          <div className="">
             <button
               onClick={() => setStep("role")}
               className="mb-4 flex items-center gap-1 bg-transparent p-0 font-body text-[12px] font-bold text-muted transition-colors hover:text-foreground"
@@ -358,7 +358,7 @@ export default function OnboardingPage() {
 
         {/* STEP: Details */}
         {step === "details" && (
-          <div className="animate-fade-up">
+          <div className="">
             <button
               onClick={() => setStep("basics")}
               className="mb-4 flex items-center gap-1 bg-transparent p-0 font-body text-[12px] font-bold text-muted transition-colors hover:text-foreground"

@@ -303,7 +303,7 @@ export default function DiscoverPage() {
                       borderColor: "#e63946",
                       boxShadow: "0 8px 28px rgba(230, 57, 70, 0.10)",
                     }}
-                    whileTap={{ scale: 0.98 }}
+                    whileTap={{ opacity: 0.9 }}
                     transition={{
                       duration: 0.35,
                       delay: index * 0.05,
