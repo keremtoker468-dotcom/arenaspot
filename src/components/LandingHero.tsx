@@ -1,276 +1,340 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useInView,
+} from "motion/react";
 import { Swords, Eye, Dumbbell, ChevronDown } from "lucide-react";
 import { useApp } from "@/components/ChatProvider";
 
-/* ── Role card data ── */
-const ROLES = [
-  {
-    key: "fan" as const,
-    title: "FAN OL",
-    desc: "Sporculari kesfet, takip et. Dovus dunyasinin heyecanini yasayan kalabaliga katil.",
-    cta: "Kesfetmeye Basla",
-    Icon: Eye,
-    image:
-      "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=900&q=80&auto=format",
-  },
-  {
-    key: "athlete" as const,
-    title: "SPORCU OL",
-    desc: "Profilini olustur, highlight videolarini yukle. Sparring partneri ve antrenor bul.",
-    cta: "Ringi Sahiplen",
-    Icon: Swords,
-    image:
-      "https://images.unsplash.com/photo-1517438322307-e67111335449?w=900&q=80&auto=format",
-  },
-  {
-    key: "coach" as const,
-    title: "ANTRENOR OL",
-    desc: "Salonunu veya PT hizmetini tanit. Yetenekli sporculari kesfet ve baglanti kur.",
-    cta: "Katil",
-    Icon: Dumbbell,
-    image:
-      "https://images.unsplash.com/photo-1526401485004-46910ecc8e51?w=900&q=80&auto=format",
-  },
-];
+/* ── Hero Section ── */
+function HeroSection({ onScrollToCards }: { onScrollToCards: () => void }) {
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  const { scrollYProgress } = useScroll({
+    target: containerRef,
+    offset: ["start start", "end start"],
+  });
+
+  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.6]);
+  const overlayOpacity = useTransform(scrollYProgress, [0, 1], [0.4, 0.8]);
+  const textY = useTransform(scrollYProgress, [0, 0.5], [0, -100]);
+  const textOpacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
+
+  return (
+    <div ref={containerRef} className="relative h-[200vh]">
+      <div className="sticky top-0 h-screen overflow-hidden">
+        {/* Background image with zoom */}
+        <motion.div
+          style={{ scale }}
+          className="absolute inset-0 w-full h-full will-change-transform"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=1920&q=80&auto=format"
+            alt="Empty MMA Cage"
+            className="w-full h-full object-cover"
+          />
+        </motion.div>
+
+        {/* Dark gradient overlay */}
+        <motion.div
+          style={{ opacity: overlayOpacity }}
+          className="absolute inset-0 bg-gradient-to-b from-black/40 to-black/80"
+        />
+
+        {/* Radial vignette */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.4)_100%)]" />
+
+        {/* Content */}
+        <motion.div
+          style={{ y: textY, opacity: textOpacity }}
+          className="relative h-full flex flex-col items-center justify-center px-4 text-center"
+        >
+          <h1 className="mb-6">
+            <div
+              className="text-white uppercase font-black tracking-[-0.03em] text-[52px] md:text-[100px] leading-none"
+              style={{ fontFamily: "Barlow Condensed, sans-serif" }}
+            >
+              RİNGDE
+            </div>
+            <div
+              className="text-[#e63946] uppercase font-black tracking-[-0.03em] text-[52px] md:text-[100px] leading-none"
+              style={{ fontFamily: "Barlow Condensed, sans-serif" }}
+            >
+              YERİNİ AL.
+            </div>
+          </h1>
+
+          <p
+            className="text-white/60 text-base md:text-lg mb-10 max-w-2xl"
+            style={{ fontFamily: "Barlow, sans-serif" }}
+          >
+            Sporcuları keşfet. Antrenörünü bul. Arenaya katıl.
+          </p>
+
+          <button
+            onClick={onScrollToCards}
+            className="px-12 py-4 bg-[#e63946] hover:bg-[#c1121f] text-white uppercase font-bold rounded-lg transition-colors duration-300 tracking-wide"
+            style={{ fontFamily: "Barlow, sans-serif" }}
+          >
+            KEŞFET
+          </button>
+
+          {/* Bouncing arrow */}
+          <motion.div
+            className="absolute bottom-12"
+            animate={{ y: [0, 10, 0] }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <ChevronDown className="w-8 h-8 text-white/40" strokeWidth={2} />
+          </motion.div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Role Card ── */
+interface RoleCardProps {
+  image: string;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  buttonText: string;
+  roleKey: "fan" | "athlete" | "coach";
+  onSelect: (role: "fan" | "athlete" | "coach") => void;
+}
+
+function RoleCard({
+  image,
+  icon,
+  title,
+  description,
+  buttonText,
+  roleKey,
+  onSelect,
+}: RoleCardProps) {
+  const ref = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+  const [isHovered, setIsHovered] = useState(false);
+  const [isExpanding, setIsExpanding] = useState(false);
+
+  const handleClick = () => {
+    if (isExpanding) return;
+    setIsExpanding(true);
+    setTimeout(() => onSelect(roleKey), 600);
+  };
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 60 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+      transition={{
+        duration: 0.5,
+        delay: 0,
+        ease: [0.25, 0.1, 0.25, 1],
+      }}
+      className="relative"
+    >
+      <motion.div
+        className="bg-white rounded-2xl border border-[#eaeaea] overflow-hidden cursor-pointer"
+        style={{
+          boxShadow: isHovered
+            ? "0 12px 40px rgba(230, 57, 70, 0.12)"
+            : "0 2px 8px rgba(0, 0, 0, 0.04)",
+          willChange: "transform, opacity, box-shadow",
+        }}
+        onHoverStart={() => setIsHovered(true)}
+        onHoverEnd={() => setIsHovered(false)}
+        onClick={handleClick}
+        animate={{
+          y: isHovered ? -4 : 0,
+          borderColor: isHovered ? "#e63946" : "#eaeaea",
+          scale: isExpanding ? 3 : 1,
+          opacity: isExpanding ? 0 : 1,
+        }}
+        transition={{
+          duration: isExpanding ? 0.5 : 0.25,
+          ease: [0.25, 0.1, 0.25, 1],
+        }}
+      >
+        {/* Image section */}
+        <div className="relative h-[280px] overflow-hidden">
+          <motion.img
+            src={image}
+            alt={title}
+            className="w-full h-full object-cover"
+            animate={{ scale: isHovered ? 1.08 : 1 }}
+            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+          />
+
+          {/* Dark gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/70" />
+
+          {/* Icon badge with glassmorphism */}
+          <motion.div
+            className="absolute bottom-4 left-4 w-[46px] h-[46px] rounded-[11px] flex items-center justify-center"
+            style={{
+              background: isHovered
+                ? "rgba(230, 57, 70, 0.8)"
+                : "rgba(255, 255, 255, 0.1)",
+              border: "1px solid rgba(255, 255, 255, 0.2)",
+              backdropFilter: "blur(10px)",
+            }}
+            animate={{
+              background: isHovered
+                ? "rgba(230, 57, 70, 0.8)"
+                : "rgba(255, 255, 255, 0.1)",
+            }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="text-white">{icon}</div>
+          </motion.div>
+
+          {/* Title overlaid on image */}
+          <div className="absolute bottom-4 left-20 right-4">
+            <h3
+              className="text-white uppercase font-black text-2xl tracking-tight"
+              style={{
+                textShadow: "0 2px 8px rgba(0,0,0,0.3)",
+                fontFamily: "Barlow Condensed, sans-serif",
+              }}
+            >
+              {title}
+            </h3>
+          </div>
+        </div>
+
+        {/* Content section */}
+        <div className="p-6 h-[180px] flex flex-col">
+          <p
+            className="text-gray-600 mb-6 leading-relaxed flex-1"
+            style={{ fontFamily: "Barlow, sans-serif" }}
+          >
+            {description}
+          </p>
+
+          <button
+            className="w-full px-6 py-3 bg-[#e63946] hover:bg-[#c1121f] text-white uppercase font-bold rounded-lg transition-colors duration-300 text-sm tracking-wide"
+            style={{ fontFamily: "Barlow, sans-serif" }}
+          >
+            {buttonText}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/* ── Role Selection Section ── */
+function RoleSelection({
+  onSelect,
+  sectionRef,
+}: {
+  onSelect: (role: "fan" | "athlete" | "coach") => void;
+  sectionRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  return (
+    <section ref={sectionRef} className="bg-white py-24 px-4 md:px-8">
+      <div className="max-w-7xl mx-auto">
+        {/* Section heading */}
+        <div className="text-center mb-16">
+          <h2
+            className="uppercase font-black text-[48px] md:text-[56px] tracking-tight mb-4"
+            style={{ fontFamily: "Barlow Condensed, sans-serif" }}
+          >
+            SENİN ROLÜN NE?
+          </h2>
+          <p
+            className="text-gray-600 text-lg max-w-2xl mx-auto"
+            style={{ fontFamily: "Barlow, sans-serif" }}
+          >
+            Platformu sana göre ayarlayalım. Bir rol seç ve arenaya katıl.
+          </p>
+        </div>
+
+        {/* Cards grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <RoleCard
+            image="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=900&q=80&auto=format"
+            icon={<Eye className="w-6 h-6" />}
+            title="FAN"
+            description="Sporcuları keşfet, takip et. Dövüş dünyasının heyecanını yaşayan kalabalığa katıl."
+            buttonText="KEŞFETMEYE BAŞLA →"
+            roleKey="fan"
+            onSelect={onSelect}
+          />
+
+          <RoleCard
+            image="https://images.unsplash.com/photo-1517438322307-e67111335449?w=900&q=80&auto=format"
+            icon={<Swords className="w-6 h-6" />}
+            title="SPORCU"
+            description="Profilini oluştur, highlight videolarını yükle. Sparring partneri ve antrenör bul."
+            buttonText="RİNGİ SAHİPLEN →"
+            roleKey="athlete"
+            onSelect={onSelect}
+          />
+
+          <RoleCard
+            image="https://images.unsplash.com/photo-1526401485004-46910ecc8e51?w=900&q=80&auto=format"
+            icon={<Dumbbell className="w-6 h-6" />}
+            title="ANTRENÖR"
+            description="Salonunu veya PT hizmetini tanıt. Yetenekli sporcuları keşfet ve bağlantı kur."
+            buttonText="KATIL →"
+            roleKey="coach"
+            onSelect={onSelect}
+          />
+        </div>
+
+        {/* Footer line */}
+        <div
+          className="text-center mt-16 text-gray-600"
+          style={{ fontFamily: "Barlow, sans-serif" }}
+        >
+          Zaten hesabın var mı?{" "}
+          <span className="text-[#e63946] underline hover:text-[#c1121f] transition-colors cursor-pointer">
+            Giriş yap
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ── Main Landing Hero ── */
 export default function LandingHero() {
   const router = useRouter();
-  const { openAuth, setRole } = useApp();
-
-  /* refs */
-  const heroRef = useRef<HTMLDivElement>(null);
-  const bgRef = useRef<HTMLDivElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
+  const { setRole } = useApp();
   const cardsRef = useRef<HTMLDivElement>(null);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  /* scroll progress for hero zoom */
-  const [expandingCard, setExpandingCard] = useState<number | null>(null);
-
-  /* ── Apple-style scroll-driven hero zoom ── */
-  const handleScroll = useCallback(() => {
-    if (!heroRef.current || !bgRef.current || !overlayRef.current || !textRef.current) return;
-
-    const rect = heroRef.current.getBoundingClientRect();
-    const vh = window.innerHeight;
-    // progress 0→1 as hero scrolls out of view
-    const progress = Math.min(Math.max(-rect.top / vh, 0), 1);
-
-    // Ring zoom: 1 → 1.6 (camera enters the ring)
-    const scale = 1 + progress * 0.6;
-    bgRef.current.style.transform = `scale(${scale})`;
-
-    // Overlay darkens as we zoom in
-    overlayRef.current.style.opacity = `${0.4 + progress * 0.4}`;
-
-    // Text parallax: moves up faster than scroll
-    textRef.current.style.transform = `translateY(${progress * -80}px)`;
-    textRef.current.style.opacity = `${1 - progress * 1.5}`;
-  }, []);
-
-  useEffect(() => {
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
-
-  /* ── Card scroll reveal (IntersectionObserver) ── */
-  const [visibleCards, setVisibleCards] = useState<boolean[]>([false, false, false]);
-
-  useEffect(() => {
-    const observers: IntersectionObserver[] = [];
-    cardRefs.current.forEach((el, i) => {
-      if (!el) return;
-      const obs = new IntersectionObserver(
-        ([entry]) => {
-          if (entry.isIntersecting) {
-            setVisibleCards((prev) => {
-              const next = [...prev];
-              next[i] = true;
-              return next;
-            });
-            obs.disconnect();
-          }
-        },
-        { threshold: 0.2 }
-      );
-      obs.observe(el);
-      observers.push(obs);
-    });
-    return () => observers.forEach((o) => o.disconnect());
-  }, []);
-
-  /* ── Cinematic card click → fullscreen expand → navigate ── */
-  const handleRoleClick = (index: number, role: "fan" | "athlete" | "coach") => {
-    if (expandingCard !== null) return;
-    setExpandingCard(index);
-
-    // After expand animation, navigate
-    setTimeout(() => {
-      if (role === "coach") {
-        setRole("coach");
-        router.push("/discover?coachselect=1");
-      } else {
-        setRole(role);
-        router.push("/discover");
-      }
-    }, 700);
-  };
 
   const scrollToCards = () => {
     cardsRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const handleRoleSelect = (role: "fan" | "athlete" | "coach") => {
+    if (role === "coach") {
+      setRole("coach");
+      router.push("/discover?coachselect=1");
+    } else {
+      setRole(role);
+      router.push("/discover");
+    }
+  };
+
   return (
-    <>
-      {/* ════════════ HERO — Scroll-driven ring zoom ════════════ */}
-      <section
-        ref={heroRef}
-        className="relative h-[200vh]"
-      >
-        <div className="sticky top-0 h-screen overflow-hidden">
-          {/* Ring background — zooms on scroll */}
-          <div
-            ref={bgRef}
-            className="absolute inset-0 bg-cover bg-center will-change-transform"
-            style={{
-              backgroundImage:
-                "url('https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=1920&q=80&auto=format')",
-            }}
-          />
-
-          {/* Dark overlay — intensifies on scroll */}
-          <div
-            ref={overlayRef}
-            className="absolute inset-0 bg-black transition-opacity duration-100"
-            style={{ opacity: 0.4 }}
-          />
-
-          {/* Vignette */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)]" />
-
-          {/* Hero text — parallax up on scroll */}
-          <div
-            ref={textRef}
-            className="relative z-10 flex h-full flex-col items-center justify-center px-6 will-change-transform"
-          >
-            <span className="mb-6 inline-block rounded-[20px] border border-white/15 bg-white/8 px-[16px] py-[6px] text-[10px] font-extrabold uppercase tracking-[4px] text-white/70 backdrop-blur-md sm:text-[11px]">
-              Dovus Sporlari Platformu
-            </span>
-
-            <h1 className="mb-5 text-center text-[52px] font-black uppercase leading-[0.88] tracking-[-3px] text-white sm:text-[76px] lg:text-[100px]">
-              Ringde
-              <br />
-              <span className="text-accent">Yerini Al.</span>
-            </h1>
-
-            <p className="mx-auto mb-10 max-w-[440px] text-center font-body text-[15px] leading-[1.7] text-white/60 sm:text-[17px]">
-              Sporculari kesfet. Antrenorunu bul. Arenaya katil.
-            </p>
-
-            <button
-              onClick={scrollToCards}
-              className="rounded-[9px] bg-accent px-8 py-[14px] font-heading text-[13px] font-extrabold uppercase tracking-[2px] text-white transition-all duration-300 hover:bg-accent-dark hover:shadow-[0_8px_40px_rgba(230,57,70,0.35)]"
-            >
-              Kesfet
-            </button>
-          </div>
-
-          {/* Scroll indicator */}
-          <button
-            onClick={scrollToCards}
-            className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 animate-bounce text-white/40 transition-colors hover:text-white"
-          >
-            <ChevronDown size={28} />
-          </button>
-        </div>
-      </section>
-
-      {/* ════════════ ROL KARTLARI — Cinematic reveal ════════════ */}
-      <section
-        ref={cardsRef}
-        className="relative bg-white py-24"
-      >
-        <div className="mx-auto max-w-[1200px] px-6 lg:px-10">
-          {/* Section heading */}
-          <div className="mb-16 text-center">
-            <h2 className="mb-3 text-[38px] font-black uppercase tracking-[-1.5px] sm:text-[48px]">
-              Senin Rolin Ne?
-            </h2>
-            <p className="mx-auto max-w-[460px] font-body text-[15px] leading-[1.6] text-muted sm:text-[16px]">
-              Platformu sana gore ayarlayalim. Bir rol sec ve arenaya katil.
-            </p>
-          </div>
-
-          {/* Cards */}
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {ROLES.map((role, i) => (
-              <div
-                key={role.key}
-                ref={(el) => { cardRefs.current[i] = el; }}
-                onClick={() => handleRoleClick(i, role.key)}
-                className={`group relative cursor-pointer overflow-hidden rounded-[16px] border border-border bg-white transition-all duration-500 ${
-                  expandingCard === i ? "card-expanding" : ""
-                } ${
-                  visibleCards[i]
-                    ? "translate-y-0 opacity-100"
-                    : "translate-y-12 opacity-0"
-                } ${
-                  i === 2 ? "sm:col-span-2 lg:col-span-1" : ""
-                }`}
-                style={{
-                  transitionDelay: visibleCards[i] ? `${i * 120}ms` : "0ms",
-                }}
-              >
-                {/* Image container */}
-                <div className="card-image relative h-[240px] overflow-hidden transition-all duration-700 sm:h-[280px]">
-                  <div
-                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 will-change-transform group-hover:scale-110"
-                    style={{ backgroundImage: `url('${role.image}')` }}
-                  />
-                  {/* Dark gradient overlay */}
-                  <div className="card-overlay absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/10 transition-opacity duration-500" />
-
-                  {/* Icon badge — glassmorphism */}
-                  <div className="absolute bottom-4 left-5 flex h-[46px] w-[46px] items-center justify-center rounded-[11px] border border-white/20 bg-white/10 text-white shadow-[0_4px_20px_rgba(0,0,0,0.2)] backdrop-blur-md transition-all duration-300 group-hover:scale-110 group-hover:bg-accent/80 group-hover:border-accent/30">
-                    <role.Icon size={22} />
-                  </div>
-
-                  {/* Title on image */}
-                  <div className="absolute bottom-5 left-[72px] text-[18px] font-black uppercase tracking-[1px] text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
-                    {role.title}
-                  </div>
-                </div>
-
-                {/* Content */}
-                <div className="card-content p-6 transition-opacity duration-300">
-                  <p className="mb-5 font-body text-[13px] leading-[1.7] text-muted">
-                    {role.desc}
-                  </p>
-                  <span className="inline-flex items-center gap-[6px] rounded-[8px] bg-accent px-5 py-[11px] font-heading text-[12px] font-extrabold uppercase tracking-[1.5px] text-white transition-all duration-300 group-hover:bg-accent-dark group-hover:shadow-[0_4px_20px_rgba(230,57,70,0.25)]">
-                    {role.cta}
-                    <ChevronDown size={14} className="-rotate-90" />
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Login link */}
-          <p className="mt-12 text-center font-body text-sm text-faint">
-            Zaten hesabin var mi?{" "}
-            <span
-              className="cursor-pointer font-semibold text-accent underline transition-colors hover:text-accent-dark"
-              onClick={openAuth}
-            >
-              Giris yap
-            </span>
-          </p>
-        </div>
-      </section>
-    </>
+    <div className="bg-white min-h-screen">
+      <HeroSection onScrollToCards={scrollToCards} />
+      <RoleSelection onSelect={handleRoleSelect} sectionRef={cardsRef} />
+    </div>
   );
 }
