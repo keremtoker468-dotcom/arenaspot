@@ -276,7 +276,7 @@ function RoleSelection({
           />
 
           <RoleCard
-            image="https://images.unsplash.com/photo-1517438322307-e67111335449?w=900&q=80&auto=format"
+            image="https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=900&q=80&auto=format"
             icon={<Swords className="w-6 h-6" />}
             title="SPORCU"
             description="Profilini oluştur, highlight videolarını yükle. Sparring partneri ve antrenör bul."
@@ -286,7 +286,7 @@ function RoleSelection({
           />
 
           <RoleCard
-            image="https://images.unsplash.com/photo-1526401485004-46910ecc8e51?w=900&q=80&auto=format"
+            image="https://images.unsplash.com/photo-1517438322307-e67111335449?w=900&q=80&auto=format"
             icon={<Dumbbell className="w-6 h-6" />}
             title="ANTRENÖR"
             description="Salonunu veya PT hizmetini tanıt. Yetenekli sporcuları keşfet ve bağlantı kur."
