@@ -292,7 +292,7 @@ export default function DiscoverPage() {
                 {pts.length} PT bulundu
               </div>
               <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 xl:grid-cols-3">
-                {pts.map((pt, index) => (
+                {pts.map((pt) => (
                   <motion.div
                     key={pt.id}
                     className="relative overflow-hidden rounded-[12px] border border-border bg-white p-5"
@@ -417,7 +417,7 @@ export default function DiscoverPage() {
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.2 }}
                   >
-                    {athletes.map((f, index) => (
+                    {athletes.map((f) => (
                       <motion.div
                         key={f.id}
                         initial={{ opacity: 0, y: 20 }}

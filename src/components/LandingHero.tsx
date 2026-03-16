@@ -111,7 +111,6 @@ interface RoleCardProps {
   description: string;
   buttonText: string;
   roleKey: "fan" | "athlete" | "coach";
-  index: number;
   onSelect: (role: "fan" | "athlete" | "coach") => void;
 }
 
@@ -122,7 +121,6 @@ function RoleCard({
   description,
   buttonText,
   roleKey,
-  index,
   onSelect,
 }: RoleCardProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -274,7 +272,7 @@ function RoleSelection({
             description="Sporcuları keşfet, takip et. Dövüş dünyasının heyecanını yaşayan kalabalığa katıl."
             buttonText="KEŞFETMEYE BAŞLA →"
             roleKey="fan"
-            index={0}
+
             onSelect={onSelect}
           />
 
@@ -285,7 +283,7 @@ function RoleSelection({
             description="Profilini oluştur, highlight videolarını yükle. Sparring partneri ve antrenör bul."
             buttonText="RİNGİ SAHİPLEN →"
             roleKey="athlete"
-            index={1}
+
             onSelect={onSelect}
           />
 
@@ -296,7 +294,7 @@ function RoleSelection({
             description="Salonunu veya PT hizmetini tanıt. Yetenekli sporcuları keşfet ve bağlantı kur."
             buttonText="KATIL →"
             roleKey="coach"
-            index={2}
+
             onSelect={onSelect}
           />
         </div>
