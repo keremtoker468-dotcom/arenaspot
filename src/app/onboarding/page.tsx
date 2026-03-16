@@ -545,7 +545,7 @@ export default function OnboardingPage() {
 
         {/* STEP: Done */}
         {step === "done" && (
-          <div className="animate-fade-up text-center">
+          <div className="text-center">
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full border-2 border-accent-border bg-accent-light">
               <Check size={36} className="text-accent" />
             </div>

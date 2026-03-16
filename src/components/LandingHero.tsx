@@ -111,7 +111,6 @@ interface RoleCardProps {
   description: string;
   buttonText: string;
   roleKey: "fan" | "athlete" | "coach";
-  index: number;
   onSelect: (role: "fan" | "athlete" | "coach") => void;
 }
 
@@ -122,19 +121,11 @@ function RoleCard({
   description,
   buttonText,
   roleKey,
-  index,
   onSelect,
 }: RoleCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true, margin: "-100px" });
   const [isHovered, setIsHovered] = useState(false);
-  const [isExpanding, setIsExpanding] = useState(false);
-
-  const handleClick = () => {
-    if (isExpanding) return;
-    setIsExpanding(true);
-    setTimeout(() => onSelect(roleKey), 600);
-  };
 
   return (
     <motion.div
@@ -143,7 +134,7 @@ function RoleCard({
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
       transition={{
         duration: 0.5,
-        delay: index * 0.15,
+        delay: 0,
         ease: [0.25, 0.1, 0.25, 1],
       }}
       className="relative"
@@ -158,14 +149,13 @@ function RoleCard({
         }}
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
-        onClick={handleClick}
+        onClick={() => onSelect(roleKey)}
         animate={{
           y: isHovered ? -4 : 0,
           borderColor: isHovered ? "#e63946" : "#eaeaea",
-          opacity: isExpanding ? 0 : 1,
         }}
         transition={{
-          duration: isExpanding ? 0.5 : 0.25,
+          duration: 0.25,
           ease: [0.25, 0.1, 0.25, 1],
         }}
       >
@@ -267,7 +257,7 @@ function RoleSelection({
             style={{ fontFamily: "Barlow, sans-serif" }}
             initial={{ opacity: 0, y: 20 }}
             animate={isHeadingInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
+            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           >
             Platformu sana göre ayarlayalım. Bir rol seç ve arenaya katıl.
           </motion.p>
@@ -282,7 +272,7 @@ function RoleSelection({
             description="Sporcuları keşfet, takip et. Dövüş dünyasının heyecanını yaşayan kalabalığa katıl."
             buttonText="KEŞFETMEYE BAŞLA →"
             roleKey="fan"
-            index={0}
+
             onSelect={onSelect}
           />
 
@@ -293,7 +283,7 @@ function RoleSelection({
             description="Profilini oluştur, highlight videolarını yükle. Sparring partneri ve antrenör bul."
             buttonText="RİNGİ SAHİPLEN →"
             roleKey="athlete"
-            index={1}
+
             onSelect={onSelect}
           />
 
@@ -304,7 +294,7 @@ function RoleSelection({
             description="Salonunu veya PT hizmetini tanıt. Yetenekli sporcuları keşfet ve bağlantı kur."
             buttonText="KATIL →"
             roleKey="coach"
-            index={2}
+
             onSelect={onSelect}
           />
         </div>
@@ -315,7 +305,7 @@ function RoleSelection({
           style={{ fontFamily: "Barlow, sans-serif" }}
           initial={{ opacity: 0 }}
           animate={isHeadingInView ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: 0.5, delay: 0.8 }}
+          transition={{ duration: 0.4 }}
         >
           Zaten hesabın var mı?{" "}
           <span className="text-[#e63946] underline hover:text-[#c1121f] transition-colors cursor-pointer">
