@@ -306,7 +306,7 @@ export default function DiscoverPage() {
                     whileTap={{ opacity: 0.9 }}
                     transition={{
                       duration: 0.35,
-                      delay: index * 0.05,
+                      delay: 0,
                       ease: [0.25, 0.1, 0.25, 1],
                     }}
                     style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}
@@ -403,7 +403,7 @@ export default function DiscoverPage() {
                         key={i}
                         initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25, delay: i * 0.04 }}
+                        transition={{ duration: 0.2 }}
                       >
                         <CardSkeleton />
                       </motion.div>
@@ -424,7 +424,7 @@ export default function DiscoverPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{
                           duration: 0.35,
-                          delay: index * 0.05,
+                          delay: 0,
                           ease: [0.25, 0.1, 0.25, 1],
                         }}
                       >
