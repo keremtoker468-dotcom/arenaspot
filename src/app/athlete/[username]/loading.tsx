@@ -1,4 +1,4 @@
-import { ProfileSkeleton } from "@/components/ui/Skeleton";
+import { ProfileSkeleton } from "@/components/ui/skeleton";
 
 export default function AthleteLoading() {
   return (

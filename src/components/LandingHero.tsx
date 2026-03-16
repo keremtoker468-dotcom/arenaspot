@@ -35,7 +35,7 @@ function HeroSection({ onScrollToCards }: { onScrollToCards: () => void }) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://images.unsplash.com/photo-1549719386-74dfcbf7dbed?w=1920&q=80&auto=format"
+            src="/images/hero-cage.png"
             alt="Empty MMA Cage"
             className="w-full h-full object-cover"
           />
@@ -266,7 +266,7 @@ function RoleSelection({
         {/* Cards grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           <RoleCard
-            image="https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=900&q=80&auto=format"
+            image="/images/fan.png"
             icon={<Eye className="w-6 h-6" />}
             title="FAN"
             description="Sporcuları keşfet, takip et. Dövüş dünyasının heyecanını yaşayan kalabalığa katıl."
@@ -276,7 +276,7 @@ function RoleSelection({
           />
 
           <RoleCard
-            image="https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?w=900&q=80&auto=format"
+            image="/images/sporcu.png"
             icon={<Swords className="w-6 h-6" />}
             title="SPORCU"
             description="Profilini oluştur, highlight videolarını yükle. Sparring partneri ve antrenör bul."
@@ -286,7 +286,7 @@ function RoleSelection({
           />
 
           <RoleCard
-            image="https://images.unsplash.com/photo-1517438322307-e67111335449?w=900&q=80&auto=format"
+            image="/images/antrenor.png"
             icon={<Dumbbell className="w-6 h-6" />}
             title="ANTRENÖR"
             description="Salonunu veya PT hizmetini tanıt. Yetenekli sporcuları keşfet ve bağlantı kur."
