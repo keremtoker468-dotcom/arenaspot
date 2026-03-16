@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { motion, AnimatePresence } from "motion/react";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/lib/types/database";
 import AthleteCard from "@/components/AthleteCard";
@@ -185,20 +186,35 @@ export default function DiscoverPage() {
       </button>
 
       {/* Mobile filter drawer */}
-      {filtersOpen && (
-        <div className="fixed inset-0 z-[150] lg:hidden">
-          <div className="absolute inset-0 bg-black/30" onClick={() => setFiltersOpen(false)} />
-          <div className="absolute bottom-0 left-0 right-0 max-h-[70vh] overflow-y-auto rounded-t-[16px] bg-white px-6 pb-6 shadow-[0_-8px_32px_rgba(0,0,0,0.12)]">
-            <div className="flex items-center justify-between py-4">
-              <span className="text-[15px] font-black">Filtreler</span>
-              <button onClick={() => setFiltersOpen(false)}>
-                <X size={20} className="text-muted" />
-              </button>
-            </div>
-            {filterSidebar}
+      <AnimatePresence>
+        {filtersOpen && (
+          <div className="fixed inset-0 z-[150] lg:hidden">
+            <motion.div
+              className="absolute inset-0 bg-black/30"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setFiltersOpen(false)}
+            />
+            <motion.div
+              className="absolute bottom-0 left-0 right-0 max-h-[70vh] overflow-y-auto rounded-t-[16px] bg-white px-6 pb-6 shadow-[0_-8px_32px_rgba(0,0,0,0.12)]"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+            >
+              <div className="flex items-center justify-between py-4">
+                <span className="text-[15px] font-black">Filtreler</span>
+                <button onClick={() => setFiltersOpen(false)}>
+                  <X size={20} className="text-muted" />
+                </button>
+              </div>
+              {filterSidebar}
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 gap-0 lg:grid-cols-[240px_1fr]">
         {/* Desktop sidebar */}
@@ -276,10 +292,24 @@ export default function DiscoverPage() {
                 {pts.length} PT bulundu
               </div>
               <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 xl:grid-cols-3">
-                {pts.map((pt) => (
-                  <div
+                {pts.map((pt, index) => (
+                  <motion.div
                     key={pt.id}
-                    className="relative overflow-hidden rounded-[12px] border border-border bg-white p-5 transition-all hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)]"
+                    className="relative overflow-hidden rounded-[12px] border border-border bg-white p-5"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    whileHover={{
+                      y: -4,
+                      borderColor: "#e63946",
+                      boxShadow: "0 8px 28px rgba(230, 57, 70, 0.10)",
+                    }}
+                    whileTap={{ opacity: 0.9 }}
+                    transition={{
+                      duration: 0.35,
+                      delay: index * 0.05,
+                      ease: [0.25, 0.1, 0.25, 1],
+                    }}
+                    style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}
                   >
                     <div className="mb-[14px] flex items-start justify-between">
                       <div className="flex items-center gap-[11px]">
@@ -344,7 +374,7 @@ export default function DiscoverPage() {
                         Is Teklifi
                       </button>
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
             </div>
@@ -358,37 +388,69 @@ export default function DiscoverPage() {
                   ? "Yukleniyor..."
                   : `${athletes.length} sporcu bulundu`}
               </div>
-              {loading ? (
-                <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 xl:grid-cols-3">
-                  {Array.from({ length: 6 }).map((_, i) => (
-                    <CardSkeleton key={i} />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 xl:grid-cols-3">
-                  {athletes.map((f) => (
-                    <AthleteCard
-                      key={f.id}
-                      athlete={f}
-                      role={role}
-                      onSelect={() =>
-                        router.push(`/athlete/${f.username}`)
-                      }
-                      onMessage={() =>
-                        openChat({
-                          id: f.id,
-                          name: f.full_name,
-                          avatar: getInitials(f.full_name),
-                          type: "fighter",
-                          style: f.fight_style || undefined,
-                          city: f.city || undefined,
-                        })
-                      }
-                      user={user}
-                    />
-                  ))}
-                </div>
-              )}
+              <AnimatePresence mode="wait">
+                {loading ? (
+                  <motion.div
+                    key="skeletons"
+                    className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 xl:grid-cols-3"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25, delay: i * 0.04 }}
+                      >
+                        <CardSkeleton />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="cards"
+                    className="grid grid-cols-1 gap-[14px] sm:grid-cols-2 xl:grid-cols-3"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    {athletes.map((f, index) => (
+                      <motion.div
+                        key={f.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{
+                          duration: 0.35,
+                          delay: index * 0.05,
+                          ease: [0.25, 0.1, 0.25, 1],
+                        }}
+                      >
+                        <AthleteCard
+                          athlete={f}
+                          role={role}
+                          onSelect={() =>
+                            router.push(`/athlete/${f.username}`)
+                          }
+                          onMessage={() =>
+                            openChat({
+                              id: f.id,
+                              name: f.full_name,
+                              avatar: getInitials(f.full_name),
+                              type: "fighter",
+                              style: f.fight_style || undefined,
+                              city: f.city || undefined,
+                            })
+                          }
+                          user={user}
+                        />
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
         </div>

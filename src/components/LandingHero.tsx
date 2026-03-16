@@ -111,6 +111,7 @@ interface RoleCardProps {
   description: string;
   buttonText: string;
   roleKey: "fan" | "athlete" | "coach";
+  index: number;
   onSelect: (role: "fan" | "athlete" | "coach") => void;
 }
 
@@ -121,6 +122,7 @@ function RoleCard({
   description,
   buttonText,
   roleKey,
+  index,
   onSelect,
 }: RoleCardProps) {
   const ref = useRef<HTMLDivElement>(null);
@@ -141,7 +143,7 @@ function RoleCard({
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
       transition={{
         duration: 0.5,
-        delay: 0,
+        delay: index * 0.15,
         ease: [0.25, 0.1, 0.25, 1],
       }}
       className="relative"
@@ -160,7 +162,6 @@ function RoleCard({
         animate={{
           y: isHovered ? -4 : 0,
           borderColor: isHovered ? "#e63946" : "#eaeaea",
-          scale: isExpanding ? 3 : 1,
           opacity: isExpanding ? 0 : 1,
         }}
         transition={{
@@ -244,23 +245,32 @@ function RoleSelection({
   onSelect: (role: "fan" | "athlete" | "coach") => void;
   sectionRef: React.RefObject<HTMLDivElement | null>;
 }) {
+  const headingRef = useRef<HTMLDivElement>(null);
+  const isHeadingInView = useInView(headingRef, { once: true, margin: "-80px" });
+
   return (
     <section ref={sectionRef} className="bg-white py-24 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
         {/* Section heading */}
-        <div className="text-center mb-16">
-          <h2
+        <div ref={headingRef} className="text-center mb-16">
+          <motion.h2
             className="uppercase font-black text-[48px] md:text-[56px] tracking-tight mb-4"
             style={{ fontFamily: "Barlow Condensed, sans-serif" }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={isHeadingInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
           >
             SENİN ROLÜN NE?
-          </h2>
-          <p
+          </motion.h2>
+          <motion.p
             className="text-gray-600 text-lg max-w-2xl mx-auto"
             style={{ fontFamily: "Barlow, sans-serif" }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={isHeadingInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
           >
             Platformu sana göre ayarlayalım. Bir rol seç ve arenaya katıl.
-          </p>
+          </motion.p>
         </div>
 
         {/* Cards grid */}
@@ -272,6 +282,7 @@ function RoleSelection({
             description="Sporcuları keşfet, takip et. Dövüş dünyasının heyecanını yaşayan kalabalığa katıl."
             buttonText="KEŞFETMEYE BAŞLA →"
             roleKey="fan"
+            index={0}
             onSelect={onSelect}
           />
 
@@ -282,6 +293,7 @@ function RoleSelection({
             description="Profilini oluştur, highlight videolarını yükle. Sparring partneri ve antrenör bul."
             buttonText="RİNGİ SAHİPLEN →"
             roleKey="athlete"
+            index={1}
             onSelect={onSelect}
           />
 
@@ -292,20 +304,24 @@ function RoleSelection({
             description="Salonunu veya PT hizmetini tanıt. Yetenekli sporcuları keşfet ve bağlantı kur."
             buttonText="KATIL →"
             roleKey="coach"
+            index={2}
             onSelect={onSelect}
           />
         </div>
 
         {/* Footer line */}
-        <div
+        <motion.div
           className="text-center mt-16 text-gray-600"
           style={{ fontFamily: "Barlow, sans-serif" }}
+          initial={{ opacity: 0 }}
+          animate={isHeadingInView ? { opacity: 1 } : { opacity: 0 }}
+          transition={{ duration: 0.5, delay: 0.8 }}
         >
           Zaten hesabın var mı?{" "}
           <span className="text-[#e63946] underline hover:text-[#c1121f] transition-colors cursor-pointer">
             Giriş yap
           </span>
-        </div>
+        </motion.div>
       </div>
     </section>
   );

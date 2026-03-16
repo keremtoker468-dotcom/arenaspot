@@ -3,6 +3,7 @@
 import type { User } from "@supabase/supabase-js";
 import type { Profile } from "@/lib/types/database";
 import type { AppRole } from "@/lib/types/app";
+import { motion } from "motion/react";
 import FollowButton from "@/components/FollowButton";
 import { MapPin, Users, MessageSquare } from "lucide-react";
 
@@ -28,11 +29,27 @@ export default function AthleteCard({
   };
 
   return (
-    <div
-      className="group relative cursor-pointer overflow-hidden rounded-[12px] border border-border bg-white p-5 transition-all hover:-translate-y-[1px] hover:border-[#d8d8d8] hover:shadow-[0_6px_24px_rgba(0,0,0,0.08)]"
+    <motion.div
+      className="group relative cursor-pointer overflow-hidden rounded-[12px] border border-border bg-white p-5"
       onClick={onSelect}
+      whileHover={{
+        y: -4,
+        borderColor: "#e63946",
+        boxShadow: "0 8px 28px rgba(230, 57, 70, 0.10)",
+      }}
+      whileTap={{ opacity: 0.9 }}
+      transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
+      style={{
+        boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+      }}
     >
-      <div className="absolute left-0 right-0 top-0 h-[3px] bg-accent opacity-0 transition-opacity group-hover:opacity-100" />
+      {/* Accent bar - animated */}
+      <motion.div
+        className="absolute left-0 right-0 top-0 h-[3px] bg-accent origin-left"
+        initial={{ scaleX: 0 }}
+        whileHover={{ scaleX: 1 }}
+        transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
+      />
 
       {/* Header */}
       <div className="mb-[14px] flex items-start justify-between">
@@ -135,6 +152,6 @@ export default function AthleteCard({
           </button>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
