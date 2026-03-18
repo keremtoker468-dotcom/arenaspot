@@ -4,46 +4,29 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Swords,
-  Eye,
-  Building2,
-  User,
-  Search,
   LayoutDashboard,
   MessageSquare,
   LogOut,
   ChevronDown,
   Menu,
   X,
-  ArrowLeft,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useApp } from "@/components/ChatProvider";
 
-const roleConfig = {
-  athlete: { label: "Sporcu", Icon: Swords },
-  fan: { label: "Fan", Icon: Eye },
-  gym: { label: "Salon", Icon: Building2 },
-  pt: { label: "PT", Icon: User },
-} as const;
+const navTabs = [
+  { label: "Keşfet", href: "/discover" },
+  { label: "Sporcular", href: "/discover" },
+  { label: "Spor Salonları", href: "/discover/gyms" },
+  { label: "Koçlar", href: "/discover/coaches" },
+];
 
 export default function Navbar() {
-  const { user, role, coachType, openAuth } = useApp();
+  const { user, openAuth } = useApp();
   const pathname = usePathname();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const supabase = createClient();
-
-  const isLanding = pathname === "/";
-
-  const displayRole =
-    role === "coach"
-      ? coachType
-        ? roleConfig[coachType]
-        : null
-      : role
-        ? roleConfig[role]
-        : null;
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -52,89 +35,64 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-[100] border-b border-border bg-white/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-[100] bg-[#1a1a2e]">
       <div className="mx-auto flex h-[60px] max-w-[1200px] items-center justify-between px-6 lg:px-10">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-[9px]">
-          <div className="flex h-8 w-8 items-center justify-center rounded-[7px] bg-accent text-[17px] font-black text-white">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-[17px] font-black text-white">
             A
           </div>
-          <span className="text-[21px] font-black uppercase tracking-[1.5px]">
+          <span className="text-[21px] font-black uppercase tracking-[1.5px] text-white">
             Arena<span className="text-accent">spot</span>
           </span>
         </Link>
 
-        {/* Desktop nav links */}
+        {/* Desktop nav tabs */}
         <div className="hidden items-center gap-1 md:flex">
-          {!isLanding && (
-            <Link
-              href="/"
-              className="flex items-center gap-[5px] rounded-[7px] px-3 py-[7px] font-heading text-[13px] font-bold text-muted transition-all hover:bg-surface hover:text-foreground"
-            >
-              <ArrowLeft size={14} />
-              Ana Sayfa
-            </Link>
-          )}
-          {role && (
-            <Link
-              href="/discover"
-              className={`flex items-center gap-[5px] rounded-[7px] px-3 py-[7px] font-heading text-[13px] font-bold transition-all hover:bg-surface hover:text-foreground ${
-                pathname === "/discover" ? "bg-surface text-foreground" : "text-muted"
-              }`}
-            >
-              <Search size={14} />
-              Kesfet
-            </Link>
-          )}
-          {user && (
-            <>
+          {navTabs.map((tab) => {
+            const isActive =
+              tab.label === "Sporcular"
+                ? pathname === "/discover"
+                : pathname === tab.href;
+            return (
               <Link
-                href="/dashboard"
-                className={`flex items-center gap-[5px] rounded-[7px] px-3 py-[7px] font-heading text-[13px] font-bold transition-all hover:bg-surface hover:text-foreground ${
-                  pathname === "/dashboard" ? "bg-surface text-foreground" : "text-muted"
+                key={tab.label}
+                href={tab.href}
+                className={`rounded-[7px] px-4 py-[7px] font-heading text-[14px] font-bold transition-all ${
+                  isActive
+                    ? "text-white"
+                    : "text-white/60 hover:text-white/90"
                 }`}
               >
-                <LayoutDashboard size={14} />
-                Dashboard
+                {tab.label}
               </Link>
-              <Link
-                href="/messages"
-                className={`flex items-center gap-[5px] rounded-[7px] px-3 py-[7px] font-heading text-[13px] font-bold transition-all hover:bg-surface hover:text-foreground ${
-                  pathname === "/messages" ? "bg-surface text-foreground" : "text-muted"
-                }`}
-              >
-                <MessageSquare size={14} />
-                Mesajlar
-              </Link>
-            </>
-          )}
+            );
+          })}
         </div>
 
         {/* Right side */}
         <div className="flex items-center gap-2">
-          {/* Role badge */}
-          {displayRole && (
-            <span className="hidden items-center gap-[5px] rounded-[20px] border border-accent-border bg-accent-light px-3 py-[5px] text-[12px] font-bold tracking-[1px] text-accent sm:flex">
-              <displayRole.Icon size={13} />
-              {displayRole.label}
-            </span>
-          )}
-
           {/* Auth buttons or user menu */}
           {user ? (
             <div className="relative">
               <button
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="flex items-center gap-[6px] rounded-[7px] border border-border px-3 py-[6px] font-heading text-[13px] font-bold text-foreground transition-all hover:bg-surface"
+                className="flex items-center gap-[6px] rounded-[7px] border border-white/20 px-3 py-[6px] font-heading text-[13px] font-bold text-white transition-all hover:border-white/40"
               >
                 <div className="flex h-6 w-6 items-center justify-center rounded-full bg-accent text-[10px] font-black text-white">
                   {user.email?.[0]?.toUpperCase() ?? "U"}
                 </div>
-                <ChevronDown size={13} className={`text-muted transition-transform ${userMenuOpen ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  size={13}
+                  className={`text-white/60 transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
+                />
               </button>
               {userMenuOpen && (
                 <>
-                  <div className="fixed inset-0 z-[98]" onClick={() => setUserMenuOpen(false)} />
+                  <div
+                    className="fixed inset-0 z-[98]"
+                    onClick={() => setUserMenuOpen(false)}
+                  />
                   <div className="absolute right-0 top-[calc(100%+6px)] z-[99] w-48 overflow-hidden rounded-[10px] border border-border bg-white shadow-[0_8px_32px_rgba(0,0,0,0.1)]">
                     <Link
                       href="/dashboard"
@@ -158,7 +116,7 @@ export default function Navbar() {
                       className="flex w-full items-center gap-[8px] px-4 py-[10px] font-body text-[13px] text-accent transition-colors hover:bg-accent-light"
                     >
                       <LogOut size={14} />
-                      Cikis Yap
+                      Çıkış Yap
                     </button>
                   </div>
                 </>
@@ -168,15 +126,15 @@ export default function Navbar() {
             <div className="hidden gap-2 sm:flex">
               <button
                 onClick={openAuth}
-                className="rounded-[7px] border border-border bg-transparent px-[15px] py-[7px] font-heading text-[13px] font-bold text-muted transition-all hover:border-[#ccc] hover:text-foreground"
+                className="rounded-[7px] border border-white/30 bg-transparent px-[15px] py-[7px] font-heading text-[13px] font-bold text-white transition-all hover:border-white/60"
               >
-                Giris Yap
+                Giriş Yap
               </button>
               <button
                 onClick={openAuth}
                 className="rounded-[7px] border border-accent bg-accent px-[15px] py-[7px] font-heading text-[13px] font-bold text-white transition-all hover:bg-accent-dark"
               >
-                Kayit Ol
+                Kayıt Ol
               </button>
             </div>
           )}
@@ -184,7 +142,7 @@ export default function Navbar() {
           {/* Mobile hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex items-center justify-center rounded-[7px] p-[7px] text-foreground transition-colors hover:bg-surface md:hidden"
+            className="flex items-center justify-center rounded-[7px] p-[7px] text-white transition-colors hover:bg-white/10 md:hidden"
           >
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -193,32 +151,24 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="border-t border-border bg-white px-6 pb-4 pt-2 md:hidden">
+        <div className="border-t border-white/10 bg-[#1a1a2e] px-6 pb-4 pt-2 md:hidden">
           <div className="flex flex-col gap-1">
-            <Link
-              href="/"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-[8px] rounded-[7px] px-3 py-[9px] font-heading text-[13px] font-bold text-muted transition-all hover:bg-surface hover:text-foreground"
-            >
-              <ArrowLeft size={14} />
-              Ana Sayfa
-            </Link>
-            {role && (
+            {navTabs.map((tab) => (
               <Link
-                href="/discover"
+                key={tab.label}
+                href={tab.href}
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-[8px] rounded-[7px] px-3 py-[9px] font-heading text-[13px] font-bold text-muted transition-all hover:bg-surface hover:text-foreground"
+                className="flex items-center gap-[8px] rounded-[7px] px-3 py-[9px] font-heading text-[13px] font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white"
               >
-                <Search size={14} />
-                Kesfet
+                {tab.label}
               </Link>
-            )}
+            ))}
             {user ? (
               <>
                 <Link
                   href="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-[8px] rounded-[7px] px-3 py-[9px] font-heading text-[13px] font-bold text-muted transition-all hover:bg-surface hover:text-foreground"
+                  className="flex items-center gap-[8px] rounded-[7px] px-3 py-[9px] font-heading text-[13px] font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white"
                 >
                   <LayoutDashboard size={14} />
                   Dashboard
@@ -226,17 +176,17 @@ export default function Navbar() {
                 <Link
                   href="/messages"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-[8px] rounded-[7px] px-3 py-[9px] font-heading text-[13px] font-bold text-muted transition-all hover:bg-surface hover:text-foreground"
+                  className="flex items-center gap-[8px] rounded-[7px] px-3 py-[9px] font-heading text-[13px] font-bold text-white/70 transition-all hover:bg-white/10 hover:text-white"
                 >
                   <MessageSquare size={14} />
                   Mesajlar
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="flex items-center gap-[8px] rounded-[7px] px-3 py-[9px] font-heading text-[13px] font-bold text-accent transition-all hover:bg-accent-light"
+                  className="flex items-center gap-[8px] rounded-[7px] px-3 py-[9px] font-heading text-[13px] font-bold text-accent transition-all hover:bg-accent-light/10"
                 >
                   <LogOut size={14} />
-                  Cikis Yap
+                  Çıkış Yap
                 </button>
               </>
             ) : (
@@ -246,9 +196,9 @@ export default function Navbar() {
                     setMobileMenuOpen(false);
                     openAuth();
                   }}
-                  className="flex-1 rounded-[7px] border border-border py-[9px] font-heading text-[13px] font-bold text-muted"
+                  className="flex-1 rounded-[7px] border border-white/30 py-[9px] font-heading text-[13px] font-bold text-white"
                 >
-                  Giris Yap
+                  Giriş Yap
                 </button>
                 <button
                   onClick={() => {
@@ -257,7 +207,7 @@ export default function Navbar() {
                   }}
                   className="flex-1 rounded-[7px] bg-accent py-[9px] font-heading text-[13px] font-bold text-white"
                 >
-                  Kayit Ol
+                  Kayıt Ol
                 </button>
               </div>
             )}
