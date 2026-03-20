@@ -29,6 +29,7 @@ const WEIGHTS_F = [
   "Welterweight",
   "Middleweight",
   "Light Heavyweight",
+  "Heavyweight",
 ];
 
 export default function DiscoverPage() {
