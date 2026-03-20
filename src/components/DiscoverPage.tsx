@@ -293,7 +293,7 @@ export default function DiscoverPage() {
                 {pts.map((pt) => (
                   <motion.div
                     key={pt.id}
-                    className="relative overflow-hidden rounded-[12px] border border-border bg-white p-5"
+                    className="relative cursor-pointer overflow-hidden rounded-[12px] border border-border bg-white p-5"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     whileHover={{
@@ -308,22 +308,20 @@ export default function DiscoverPage() {
                       ease: [0.25, 0.1, 0.25, 1],
                     }}
                     style={{ boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)" }}
+                    onClick={() => router.push(`/trainer/${pt.username}`)}
                   >
-                    <div className="mb-[14px] flex items-start justify-between">
-                      <div className="flex items-center gap-[11px]">
-                        <div className="flex h-[50px] w-[50px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-accent-border bg-accent-light text-[15px] font-black text-accent">
-                          {getInitials(pt.full_name)}
+                    <div className="mb-[14px] flex items-center gap-[11px]">
+                      <div className="flex h-[50px] w-[50px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-accent-border bg-accent-light text-[15px] font-black text-accent">
+                        {getInitials(pt.full_name)}
+                      </div>
+                      <div>
+                        <div className="text-[17px] font-extrabold">
+                          {pt.full_name}
                         </div>
-                        <div>
-                          <div className="text-[17px] font-extrabold">
-                            {pt.full_name}
-                          </div>
-                          <div className="mt-[1px] font-body text-[12px] text-faint">
-                            {pt.workplace || "Freelance"}
-                          </div>
+                        <div className="mt-[1px] font-body text-[12px] text-faint">
+                          {pt.workplace || "Freelance"}
                         </div>
                       </div>
-                      <FollowButton athleteId={pt.id} />
                     </div>
 
                     <div className="mb-3 flex flex-wrap gap-[6px]">
@@ -356,21 +354,25 @@ export default function DiscoverPage() {
                         <Users size={12} />
                         {pt.followers_count} takipçi
                       </span>
-                      <button
-                        onClick={() =>
-                          openChat({
-                            id: pt.id,
-                            name: pt.full_name,
-                            avatar: getInitials(pt.full_name),
-                            type: "pt",
-                            city: pt.city || undefined,
-                          })
-                        }
-                        className="inline-flex items-center gap-[5px] rounded-[6px] bg-foreground px-[13px] py-[6px] font-heading text-[12px] font-extrabold text-white transition-colors hover:bg-[#333]"
-                      >
-                        <Briefcase size={12} />
-                        İş Teklifi
-                      </button>
+                      <div className="flex items-center gap-[8px]" onClick={(e) => e.stopPropagation()}>
+                        <FollowButton athleteId={pt.id} variant="card" />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openChat({
+                              id: pt.id,
+                              name: pt.full_name,
+                              avatar: getInitials(pt.full_name),
+                              type: "pt",
+                              city: pt.city || undefined,
+                            });
+                          }}
+                          className="inline-flex items-center gap-[5px] rounded-[6px] bg-foreground px-[13px] py-[6px] font-heading text-[12px] font-extrabold text-white transition-colors hover:bg-[#333]"
+                        >
+                          <Briefcase size={12} />
+                          İş Teklifi
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
