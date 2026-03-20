@@ -230,7 +230,7 @@ export default function DiscoverPage() {
             <h2 className="mb-1 text-[28px] font-black tracking-[-0.5px] sm:text-[36px]">
               Sporcu Keşfet
             </h2>
-            <p className="font-body text-sm text-muted">
+            <p className="font-body text-sm text-black">
               Türkiye ve MENA bölgesindeki dövüş sporcularını keşfet. Sparring
               partneri bul, takip et, mesajlaş.
             </p>
