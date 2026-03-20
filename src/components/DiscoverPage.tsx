@@ -20,15 +20,15 @@ import {
   X,
 } from "lucide-react";
 
-const STYLES_F = ["All", "MMA", "Boks", "Kickboks", "Muay Thai"];
-const CITIES_F = ["All", "Istanbul", "Ankara", "Izmir", "Bursa"];
+const STYLES_F = ["MMA", "Striker", "Grappler"];
 const WEIGHTS_F = [
-  "All",
+  "Flyweight",
+  "Bantamweight",
   "Featherweight",
   "Lightweight",
   "Welterweight",
   "Middleweight",
-  "Heavyweight",
+  "Light Heavyweight",
 ];
 
 export default function DiscoverPage() {
@@ -40,9 +40,9 @@ export default function DiscoverPage() {
   const [discoverTab, setDiscoverTab] = useState<"athletes" | "pts">(
     "athletes"
   );
-  const [fStyle, setFStyle] = useState("All");
-  const [fCity, setFCity] = useState("All");
-  const [fWeight, setFWeight] = useState("All");
+  const [fStyle, setFStyle] = useState("");
+  const [fWeight, setFWeight] = useState("");
+  const [proOnly, setProOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [athletes, setAthletes] = useState<Profile[]>([]);
   const [pts, setPts] = useState<Profile[]>([]);
@@ -59,9 +59,9 @@ export default function DiscoverPage() {
       .eq("role", "athlete")
       .order("followers_count", { ascending: false });
 
-    if (fStyle !== "All") query = query.eq("fight_style", fStyle);
-    if (fCity !== "All") query = query.eq("city", fCity);
-    if (fWeight !== "All") query = query.eq("weight_class", fWeight);
+    if (fStyle) query = query.eq("fight_style", fStyle);
+    if (fWeight) query = query.eq("weight_class", fWeight);
+    if (proOnly) query = query.eq("is_verified", true);
     if (search)
       query = query.or(
         `full_name.ilike.%${search}%,username.ilike.%${search}%`
@@ -70,7 +70,7 @@ export default function DiscoverPage() {
     const { data } = await query;
     setAthletes((data ?? []) as Profile[]);
     setLoading(false);
-  }, [fStyle, fCity, fWeight, search, supabase]);
+  }, [fStyle, fWeight, proOnly, search, supabase]);
 
   const fetchPTs = useCallback(async () => {
     const { data } = await supabase
@@ -104,20 +104,40 @@ export default function DiscoverPage() {
     );
   }
 
+  const activeFilterCount = [fStyle !== "", fWeight !== "", proOnly].filter(
+    Boolean
+  ).length;
+
   const filterSidebar = (
     <div className="p-[28px_0]">
-      <div className="mb-5 text-[11px] font-extrabold uppercase tracking-[3px] text-faint">
+      <div className="mb-1 text-[13px] font-extrabold uppercase tracking-[2px] text-foreground">
         Filtreler
       </div>
+      <div className="mb-6 font-body text-[12px] text-faint">
+        Sporcu aramak için filtrele
+      </div>
+
+      {/* PRO filter */}
+      <label className="mb-6 flex cursor-pointer items-center gap-[10px]">
+        <input
+          type="checkbox"
+          checked={proOnly}
+          onChange={(e) => setProOnly(e.target.checked)}
+          className="h-[16px] w-[16px] rounded border-border accent-accent"
+        />
+        <span className="font-body text-[13px] font-semibold text-foreground">
+          Sadece PRO Sporcular
+        </span>
+      </label>
 
       <div className="mb-6">
-        <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-faint">
-          Stil
+        <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-foreground">
+          Dövüş Stili
         </div>
         {STYLES_F.map((s) => (
           <button
             key={s}
-            onClick={() => setFStyle(s)}
+            onClick={() => setFStyle(fStyle === s ? "" : s)}
             className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-sm font-semibold transition-all ${
               fStyle === s
                 ? "bg-accent-light font-bold text-accent"
@@ -129,33 +149,14 @@ export default function DiscoverPage() {
         ))}
       </div>
 
-      <div className="mb-6">
-        <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-faint">
-          Sehir
-        </div>
-        {CITIES_F.map((c) => (
-          <button
-            key={c}
-            onClick={() => setFCity(c)}
-            className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-sm font-semibold transition-all ${
-              fCity === c
-                ? "bg-accent-light font-bold text-accent"
-                : "text-muted hover:bg-surface hover:text-foreground"
-            }`}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
-
       <div>
-        <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-faint">
-          Kilo Sinifi
+        <div className="mb-2 text-[11px] font-bold uppercase tracking-[2px] text-foreground">
+          Kilo Sınıfı
         </div>
         {WEIGHTS_F.map((w) => (
           <button
             key={w}
-            onClick={() => setFWeight(w)}
+            onClick={() => setFWeight(fWeight === w ? "" : w)}
             className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-[13px] font-semibold transition-all ${
               fWeight === w
                 ? "bg-accent-light font-bold text-accent"
@@ -178,9 +179,9 @@ export default function DiscoverPage() {
       >
         <SlidersHorizontal size={14} />
         Filtreler
-        {(fStyle !== "All" || fCity !== "All" || fWeight !== "All") && (
+        {activeFilterCount > 0 && (
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[10px] font-bold text-white">
-            {[fStyle !== "All", fCity !== "All", fWeight !== "All"].filter(Boolean).length}
+            {activeFilterCount}
           </span>
         )}
       </button>
@@ -226,20 +227,11 @@ export default function DiscoverPage() {
         <div className="py-[28px] lg:pl-[32px]">
           <div className="mb-4">
             <h2 className="mb-1 text-[28px] font-black tracking-[-0.5px] sm:text-[36px]">
-              {role === "athlete"
-                ? "Sporcu Kesfet"
-                : role === "fan"
-                  ? "Dovusculeri Kesfet"
-                  : "Sporculari Kesfet"}
+              Sporcu Keşfet
             </h2>
             <p className="font-body text-sm text-muted">
-              {role === "athlete"
-                ? "Sparring partneri bul, rakiplerini tani."
-                : role === "fan"
-                  ? "Favori sporcularini takip et."
-                  : coachType === "gym"
-                    ? "Yetenekli sporculari bul. PT'lerle is birligi yap."
-                    : "Yetenekli sporculari bul ve onlara ulas."}
+              Türkiye ve MENA bölgesindeki dövüş sporcularını keşfet. Sparring
+              partneri bul, takip et, mesajlaş.
             </p>
           </div>
 
@@ -266,7 +258,7 @@ export default function DiscoverPage() {
               >
                 PT&apos;ler
                 <span className="rounded-[10px] bg-accent px-[6px] py-[1px] text-[10px] font-bold text-white">
-                  Is Birligi
+                  İş Birliği
                 </span>
               </button>
             </div>
@@ -274,11 +266,16 @@ export default function DiscoverPage() {
 
           {/* Search */}
           <div className="relative mb-5">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint" />
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-faint"
+            />
             <input
               className="w-full rounded-[8px] border border-border py-[10px] pl-9 pr-[14px] font-body text-sm outline-none transition-colors focus:border-accent"
               placeholder={
-                discoverTab === "pts" ? "PT ara..." : "Sporcu ara..."
+                discoverTab === "pts"
+                  ? "PT ara..."
+                  : "Sporcu ara... (İsim veya kullanıcı adı)"
               }
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -313,7 +310,7 @@ export default function DiscoverPage() {
                   >
                     <div className="mb-[14px] flex items-start justify-between">
                       <div className="flex items-center gap-[11px]">
-                        <div className="flex h-[50px] w-[50px] flex-shrink-0 items-center justify-center rounded-[11px] border-[1.5px] border-accent-border bg-accent-light text-[15px] font-black text-accent">
+                        <div className="flex h-[50px] w-[50px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-accent-border bg-accent-light text-[15px] font-black text-accent">
                           {getInitials(pt.full_name)}
                         </div>
                         <div>
@@ -356,7 +353,7 @@ export default function DiscoverPage() {
                     <div className="flex items-center justify-between border-t border-border pt-[10px]">
                       <span className="inline-flex items-center gap-1 font-body text-[12px] text-faint">
                         <Users size={12} />
-                        {pt.followers_count} takipci
+                        {pt.followers_count} takipçi
                       </span>
                       <button
                         onClick={() =>
@@ -371,7 +368,7 @@ export default function DiscoverPage() {
                         className="inline-flex items-center gap-[5px] rounded-[6px] bg-foreground px-[13px] py-[6px] font-heading text-[12px] font-extrabold text-white transition-colors hover:bg-[#333]"
                       >
                         <Briefcase size={12} />
-                        Is Teklifi
+                        İş Teklifi
                       </button>
                     </div>
                   </motion.div>
@@ -385,7 +382,7 @@ export default function DiscoverPage() {
             <div>
               <div className="mb-4 text-[13px] font-semibold text-faint">
                 {loading
-                  ? "Yukleniyor..."
+                  ? "Yükleniyor..."
                   : `${athletes.length} sporcu bulundu`}
               </div>
               <AnimatePresence mode="wait">

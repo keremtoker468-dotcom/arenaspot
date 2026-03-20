@@ -5,7 +5,7 @@ import type { Profile } from "@/lib/types/database";
 import type { AppRole } from "@/lib/types/app";
 import { motion } from "motion/react";
 import FollowButton from "@/components/FollowButton";
-import { MapPin, Users, MessageSquare } from "lucide-react";
+import { Users, MessageCircle } from "lucide-react";
 
 interface AthleteCardProps {
   athlete: Profile;
@@ -28,6 +28,13 @@ export default function AthleteCard({
       : name.substring(0, 2);
   };
 
+  const formatFollowers = (count: number) => {
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}k`;
+    }
+    return count.toString();
+  };
+
   return (
     <motion.div
       className="group relative cursor-pointer overflow-hidden rounded-[12px] border border-border bg-white p-5"
@@ -45,36 +52,31 @@ export default function AthleteCard({
     >
       {/* Accent bar - animated */}
       <motion.div
-        className="absolute left-0 right-0 top-0 h-[3px] bg-accent origin-left"
+        className="absolute left-0 right-0 top-0 h-[3px] origin-left bg-accent"
         initial={{ scaleX: 0 }}
         whileHover={{ scaleX: 1 }}
         transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
       />
 
       {/* Header */}
-      <div className="mb-[14px] flex items-start justify-between">
-        <div className="flex items-center gap-[11px]">
-          <div className="flex h-[50px] w-[50px] flex-shrink-0 items-center justify-center rounded-[11px] border-[1.5px] border-accent-border bg-accent-light text-[15px] font-black text-accent">
-            {getInitials(athlete.full_name)}
-          </div>
-          <div>
-            <div className="flex items-center gap-[7px]">
-              <span className="text-[17px] font-extrabold">
-                {athlete.full_name}
-              </span>
-              {athlete.is_verified && (
-                <span className="rounded-[4px] bg-accent px-[6px] py-[2px] text-[9px] font-extrabold tracking-[1px] text-white">
-                  PRO
-                </span>
-              )}
-            </div>
-            <div className="mt-[1px] font-body text-[12px] text-faint">
-              @{athlete.username}
-            </div>
-          </div>
+      <div className="mb-[14px] flex items-center gap-[11px]">
+        <div className="flex h-[50px] w-[50px] flex-shrink-0 items-center justify-center rounded-full border-[1.5px] border-accent-border bg-accent-light text-[15px] font-black text-accent">
+          {getInitials(athlete.full_name)}
         </div>
-        <div onClick={(e) => e.stopPropagation()}>
-          <FollowButton athleteId={athlete.id} />
+        <div>
+          <div className="flex items-center gap-[7px]">
+            <span className="text-[17px] font-extrabold">
+              {athlete.full_name}
+            </span>
+            {athlete.is_verified && (
+              <span className="rounded-[4px] bg-accent px-[6px] py-[2px] text-[9px] font-extrabold tracking-[1px] text-white">
+                PRO
+              </span>
+            )}
+          </div>
+          <div className="mt-[1px] font-body text-[12px] text-faint">
+            @{athlete.username}
+          </div>
         </div>
       </div>
 
@@ -91,66 +93,60 @@ export default function AthleteCard({
           </span>
         )}
         {athlete.city && (
-          <span className="inline-flex items-center gap-1 rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
-            <MapPin size={10} />
+          <span className="inline-block rounded-[5px] border border-border bg-surface px-[9px] py-[3px] text-[12px] font-bold text-muted">
             {athlete.city}
           </span>
         )}
       </div>
 
-      {/* Record */}
-      <div className="mb-3 flex gap-[6px]">
-        <div className="flex-1 rounded-[7px] bg-[#f0fdf4] p-[8px_4px] text-center">
-          <div className="text-[22px] font-black leading-none text-[#16a34a]">
+      {/* Record - inline format */}
+      <div className="mb-3 flex items-center gap-[14px]">
+        <div className="flex items-baseline gap-[5px]">
+          <span className="text-[20px] font-black leading-none text-[#16a34a]">
             {athlete.record_w}
-          </div>
-          <div className="mt-[2px] text-[10px] font-bold tracking-[1px] text-[#16a34a]">
+          </span>
+          <span className="text-[11px] font-bold tracking-[1px] text-[#16a34a]">
             WIN
-          </div>
+          </span>
         </div>
-        <div className="flex-1 rounded-[7px] bg-accent-light p-[8px_4px] text-center">
-          <div className="text-[22px] font-black leading-none text-accent">
+        <div className="flex items-baseline gap-[5px]">
+          <span className="text-[20px] font-black leading-none text-accent">
             {athlete.record_l}
-          </div>
-          <div className="mt-[2px] text-[10px] font-bold tracking-[1px] text-accent">
+          </span>
+          <span className="text-[11px] font-bold tracking-[1px] text-accent">
             LOSS
-          </div>
+          </span>
         </div>
-        <div className="flex-1 rounded-[7px] bg-surface p-[8px_4px] text-center">
-          <div className="text-[22px] font-black leading-none text-faint">
+        <div className="flex items-baseline gap-[5px]">
+          <span className="text-[20px] font-black leading-none text-faint">
             {athlete.record_d}
-          </div>
-          <div className="mt-[2px] text-[10px] font-bold tracking-[1px] text-faint">
+          </span>
+          <span className="text-[11px] font-bold tracking-[1px] text-faint">
             DRAW
-          </div>
+          </span>
         </div>
       </div>
-
-      {/* Bio */}
-      {athlete.bio && (
-        <p className="mb-3 font-body text-[13px] leading-[1.5] text-muted">
-          {athlete.bio}
-        </p>
-      )}
 
       {/* Footer */}
       <div className="flex items-center justify-between border-t border-border pt-[10px]">
         <span className="inline-flex items-center gap-1 font-body text-[12px] text-faint">
           <Users size={12} />
-          {athlete.followers_count.toLocaleString()}
+          {formatFollowers(athlete.followers_count)}
         </span>
-        {(role === "athlete" || role === "coach") && (
-          <button
-            className="inline-flex items-center gap-[5px] rounded-[6px] bg-foreground px-3 py-[5px] font-heading text-[11px] font-extrabold text-white transition-colors hover:bg-[#333]"
-            onClick={(e) => {
-              e.stopPropagation();
-              onMessage();
-            }}
-          >
-            <MessageSquare size={11} />
-            {role === "coach" ? "Iletisim" : "Mesaj At"}
-          </button>
-        )}
+        <div className="flex items-center gap-[8px]" onClick={(e) => e.stopPropagation()}>
+          <FollowButton athleteId={athlete.id} variant="card" />
+          {(role === "athlete" || role === "coach") && (
+            <button
+              className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-border text-muted transition-colors hover:border-accent hover:text-accent"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMessage();
+              }}
+            >
+              <MessageCircle size={14} />
+            </button>
+          )}
+        </div>
       </div>
     </motion.div>
   );

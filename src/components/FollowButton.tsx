@@ -2,9 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Check, Plus } from "lucide-react";
+import { Check, Plus, UserPlus } from "lucide-react";
 
-export default function FollowButton({ athleteId }: { athleteId: string }) {
+interface FollowButtonProps {
+  athleteId: string;
+  variant?: "default" | "card";
+}
+
+export default function FollowButton({
+  athleteId,
+  variant = "default",
+}: FollowButtonProps) {
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
@@ -57,6 +65,32 @@ export default function FollowButton({ athleteId }: { athleteId: string }) {
       setLoading(false);
     }
   };
+
+  if (variant === "card") {
+    return (
+      <button
+        onClick={handleFollow}
+        disabled={loading}
+        className={`inline-flex items-center gap-[5px] whitespace-nowrap rounded-[6px] px-[14px] py-[6px] font-heading text-[12px] font-extrabold tracking-[0.5px] transition-all disabled:opacity-50 ${
+          isFollowing
+            ? "border border-border bg-surface text-muted hover:bg-accent-light hover:text-accent"
+            : "bg-accent text-white hover:bg-accent-dark"
+        }`}
+      >
+        {isFollowing ? (
+          <>
+            <Check size={12} />
+            Takip
+          </>
+        ) : (
+          <>
+            <UserPlus size={12} />
+            Takip Et
+          </>
+        )}
+      </button>
+    );
+  }
 
   return (
     <button
