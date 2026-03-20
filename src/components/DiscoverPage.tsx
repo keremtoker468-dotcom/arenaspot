@@ -29,6 +29,7 @@ const WEIGHTS_F = [
   "Welterweight",
   "Middleweight",
   "Light Heavyweight",
+  "Heavyweight",
 ];
 
 export default function DiscoverPage() {
@@ -138,10 +139,10 @@ export default function DiscoverPage() {
           <button
             key={s}
             onClick={() => setFStyle(fStyle === s ? "" : s)}
-            className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-sm font-semibold transition-all ${
+            className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-body text-[14px] font-semibold transition-all ${
               fStyle === s
                 ? "bg-accent-light font-bold text-accent"
-                : "text-muted hover:bg-surface hover:text-foreground"
+                : "text-foreground/70 hover:bg-surface hover:text-foreground"
             }`}
           >
             {s}
@@ -157,10 +158,10 @@ export default function DiscoverPage() {
           <button
             key={w}
             onClick={() => setFWeight(fWeight === w ? "" : w)}
-            className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-heading text-[13px] font-semibold transition-all ${
+            className={`block w-full rounded-[6px] bg-transparent px-[10px] py-[7px] text-left font-body text-[14px] font-semibold transition-all ${
               fWeight === w
                 ? "bg-accent-light font-bold text-accent"
-                : "text-muted hover:bg-surface hover:text-foreground"
+                : "text-foreground/70 hover:bg-surface hover:text-foreground"
             }`}
           >
             {w}
